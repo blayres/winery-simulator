@@ -1,14 +1,12 @@
 ## VineyardSimulation.gd
 ## Singleton — simulation brain for all vineyard tiles.
 ##
-## Owns all TileSimData instances, initializes terroir, runs season ticks,
-## emits tile_data_changed so the visual layer stays in sync.
+## Owns all TileSimData instances, initializes terroir, runs ticks.
+## Two tick types:
+##   climate_tick  — weekly, driven by ClimateManager.climate_updated
+##   season_tick   — per season, driven by tick_season() (future GameManager hook)
 ##
 ## Single-writer rule: only this autoload writes TileSimData.
-## All other systems (visuals, UI, economy) are read-only consumers.
-##
-## Godot 4.6: uses FastNoiseLite for spatial variation (built-in).
-## All config values come from data/simulation/vineyard_sim_config.json.
 
 extends Node
 
@@ -38,9 +36,9 @@ func _ready() -> void:
 	_noise.seed       = randi()
 
 	DataManager.data_loaded.connect(_on_data_loaded)
+	# Connect to climate updates — this drives the weekly tile tick.
+	ClimateManager.climate_updated.connect(_on_climate_updated)
 
-	# If data is already loaded (DataManager runs before this in autoload order),
-	# build archetypes immediately.
 	if DataManager.is_loaded("soils") and DataManager.is_loaded("vineyard_sim"):
 		_build_archetypes()
 
@@ -86,7 +84,13 @@ func get_all_tile_data() -> Array:
 
 ## Public wrapper for quality recomputation — used by SimDemoSeeder.
 func recompute_quality_public(data: TileSimData) -> void:
-	_recompute_quality(data)
+	if not data.is_planted:
+		data.effective_quality = 0.0
+		return
+	var age_factor: float = clampf(float(data.vine_age) / 4.0 / 15.0, 0.0, 1.0)
+	data.effective_quality = clampf(
+		data.quality_potential * data.vine_health * (0.7 + age_factor * 0.3), 0.0, 1.0
+	)
 
 
 ## Plant a grape variety on a tile. Returns false if already planted.
@@ -98,7 +102,7 @@ func plant_vine(col: int, row: int, grape_id: String) -> bool:
 	data.grape_variety = grape_id
 	data.vine_age      = 0
 	data.vine_health   = float(_cfg.get("starting_health", 0.85))
-	_recompute_quality(data)
+	recompute_quality_public(data)
 	tile_data_changed.emit(data)
 	return true
 
@@ -112,7 +116,7 @@ func uproot_vine(col: int, row: int) -> void:
 	data.grape_variety = ""
 	data.vine_age      = 0
 	data.vine_health   = 0.0
-	_recompute_quality(data)
+	recompute_quality_public(data)
 	tile_data_changed.emit(data)
 
 ## Run one simulation tick (called each season by GameManager).
@@ -125,6 +129,64 @@ func tick_season() -> void:
 		if data.is_planted:
 			_tick_vine(data)
 			tile_data_changed.emit(data)
+
+
+# ─── Private — climate tick ───────────────────────────────────────────────────
+
+func _on_climate_updated(climate_state: Dictionary) -> void:
+	if _tile_data.is_empty():
+		return
+	var effects_cfg: Dictionary = _get_cfg_section("climate_effects")
+	var stats: Dictionary = _run_climate_tick(climate_state, effects_cfg)
+	_log_tick_summary(stats)
+
+
+func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary) -> Dictionary:
+	var changed:       int   = 0
+	var sum_humidity:  float = 0.0
+	var sum_health:    float = 0.0
+	var sum_disease:   float = 0.0
+	var sum_quality:   float = 0.0
+	var planted:       int   = 0
+	var total:         int   = 0
+
+	for key: String in _tile_data:
+		var raw: Variant = _tile_data[key]
+		if not raw is TileSimData:
+			continue
+		var tile: TileSimData = raw
+		total += 1
+
+		var soil: Dictionary = _get_archetype(tile.soil_type)
+		if ClimateTileProcessor.apply(tile, climate_state, soil, effects_cfg):
+			changed += 1
+			tile_data_changed.emit(tile)
+
+		sum_humidity += tile.humidity
+		sum_disease  += tile.disease_risk
+		if tile.is_planted:
+			planted     += 1
+			sum_health  += tile.vine_health
+			sum_quality += tile.quality_potential
+
+	return {
+		"total": total, "changed": changed, "planted": planted,
+		"sum_humidity": sum_humidity, "sum_health": sum_health,
+		"sum_disease": sum_disease,   "sum_quality": sum_quality,
+	}
+
+
+func _log_tick_summary(s: Dictionary) -> void:
+	var total:   int = int(s.get("total",   0))
+	var planted: int = int(s.get("planted", 0))
+	if total == 0:
+		return
+	var avg_h: float = float(s["sum_humidity"]) / float(total)
+	var avg_d: float = float(s["sum_disease"])  / float(total)
+	var avg_v: float = float(s["sum_health"])   / float(planted) if planted > 0 else 0.0
+	var avg_q: float = float(s["sum_quality"])  / float(planted) if planted > 0 else 0.0
+	print("Vineyard Tick: avg_humidity=%.2f avg_health=%.2f avg_disease=%.2f avg_quality=%.2f  (%d changed)" \
+			% [avg_h, avg_v, avg_d, avg_q, int(s.get("changed", 0))])
 
 
 # ─── Private — initialization ─────────────────────────────────────────────────
@@ -206,7 +268,7 @@ func _create_tile_data(col: int, row: int) -> TileSimData:
 	data.grape_variety = ""
 	data.vine_age      = 0
 	data.vine_health   = 0.0
-	_recompute_quality(data)
+	recompute_quality_public(data)
 	return data
 
 
@@ -223,45 +285,12 @@ func _pick_soil_for(col: int, row: int) -> String:
 	return str(ids[idx])
 
 
-# ─── Private — per-season tick ────────────────────────────────────────────────
+# ─── Private — per-season tick ───────────────────────────────────────────────
 
+## Season tick: ages vines. Climate tick handles health/disease/quality weekly.
 func _tick_vine(data: TileSimData) -> void:
-	# Age the vine by one season.
 	data.vine_age = mini(data.vine_age + 1, int(_get_vine_cfg("max_age", 50)) * 4)
-
-	# Health drifts slightly — future systems (climate, disease) will modify this.
-	# For now, healthy vines stay healthy with minor noise.
-	var health_drift: float = randf_range(-0.01, 0.005)
-	data.vine_health = clampf(
-		data.vine_health + health_drift,
-		float(_get_vine_cfg("min_health", 0.0)),
-		float(_get_vine_cfg("max_health", 1.0))
-	)
-
-	# Disease risk nudges with humidity.
-	var dis_cfg: Dictionary = _get_cfg_section("disease_risk")
-	data.disease_risk = clampf(
-		float(dis_cfg.get("base", 0.05)) +
-		data.humidity * float(dis_cfg.get("humidity_factor", 0.20)) +
-		randf_range(-0.01, 0.01),
-		0.0, 1.0
-	)
-
-	_recompute_quality(data)
-
-
-func _recompute_quality(data: TileSimData) -> void:
-	if not data.is_planted:
-		data.effective_quality = 0.0
-		return
-	# Effective quality = potential × health factor × age bonus.
-	# Age bonus: peaks at ~15 years (60 seasons), then plateaus.
-	var age_years: float  = float(data.vine_age) / 4.0
-	var age_factor: float = clampf(age_years / 15.0, 0.0, 1.0)
-	data.effective_quality = clampf(
-		data.quality_potential * data.vine_health * (0.7 + age_factor * 0.3),
-		0.0, 1.0
-	)
+	recompute_quality_public(data)
 
 
 # ─── Private — demo seeding (prototype only) ─────────────────────────────────

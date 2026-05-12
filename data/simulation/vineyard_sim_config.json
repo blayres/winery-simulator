@@ -1,10 +1,10 @@
 {
   "humidity": {
-    "base_min":          0.20,
-    "base_max":          0.85,
-    "variation_radius":  2,
+    "base_min":           0.20,
+    "base_max":           0.85,
+    "variation_radius":   2,
     "variation_strength": 0.12,
-    "noise_scale":       0.18
+    "noise_scale":        0.18
   },
   "fertility": {
     "variation_strength": 0.10
@@ -20,5 +20,46 @@
   "disease_risk": {
     "base":              0.05,
     "humidity_factor":   0.20
+  },
+  "climate_effects": {
+    "humidity": {
+      "rainfall_gain_rate":    0.008,
+      "temp_dry_rate":         0.003,
+      "wind_dry_rate":         0.002,
+      "drainage_modifier":     0.6,
+      "retention_modifier":    0.4
+    },
+    "disease": {
+      "high_humidity_threshold": 0.70,
+      "high_humidity_gain":      0.04,
+      "rainy_condition_gain":    0.03,
+      "low_wind_threshold":      8.0,
+      "low_wind_gain":           0.02,
+      "dry_condition_loss":      0.03,
+      "high_wind_threshold":     20.0,
+      "high_wind_loss":          0.02,
+      "good_drainage_loss":      0.01,
+      "unplanted_recovery_rate": 0.02
+    },
+    "vine_health": {
+      "drought_threshold":       0.25,
+      "drought_damage":          0.04,
+      "flood_threshold":         0.80,
+      "flood_damage":            0.02,
+      "balanced_min":            0.35,
+      "balanced_max":            0.65,
+      "balanced_recovery":       0.01,
+      "frost_damage":            0.06,
+      "heat_damage":             0.03
+    },
+    "quality": {
+      "stress_benefit_min":      0.28,
+      "stress_benefit_max":      0.38,
+      "stress_gain":             0.005,
+      "excess_humidity_threshold": 0.75,
+      "excess_humidity_loss":    0.004,
+      "low_health_threshold":    0.40,
+      "low_health_loss":         0.006
+    }
   }
 }
