@@ -151,6 +151,10 @@ func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary) -> Di
 	var sum_health:    float = 0.0
 	var sum_disease:   float = 0.0
 	var sum_quality:   float = 0.0
+	var min_humidity:  float = 1.0
+	var max_humidity:  float = 0.0
+	var min_health:    float = 1.0
+	var max_health:    float = 0.0
 	var planted:       int   = 0
 	var total:         int   = 0
 
@@ -166,17 +170,22 @@ func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary) -> Di
 			changed += 1
 			tile_data_changed.emit(tile)
 
-		sum_humidity += tile.humidity
-		sum_disease  += tile.disease_risk
+		sum_humidity  += tile.humidity
+		min_humidity   = minf(min_humidity, tile.humidity)
+		max_humidity   = maxf(max_humidity, tile.humidity)
+		sum_disease   += tile.disease_risk
 		if tile.is_planted:
-			planted     += 1
-			sum_health  += tile.vine_health
+			planted    += 1
+			sum_health += tile.vine_health
+			min_health  = minf(min_health, tile.vine_health)
+			max_health  = maxf(max_health, tile.vine_health)
 			sum_quality += tile.quality_potential
 
 	return {
 		"total": total, "changed": changed, "planted": planted,
-		"sum_humidity": sum_humidity, "sum_health": sum_health,
-		"sum_disease": sum_disease,   "sum_quality": sum_quality,
+		"sum_humidity": sum_humidity, "min_humidity": min_humidity, "max_humidity": max_humidity,
+		"sum_health":   sum_health,   "min_health":   min_health,   "max_health":   max_health,
+		"sum_disease":  sum_disease,  "sum_quality":  sum_quality,
 	}
 
 
@@ -186,11 +195,15 @@ func _log_tick_summary(s: Dictionary) -> void:
 	if total == 0:
 		return
 	var avg_h: float = float(s["sum_humidity"]) / float(total)
+	var min_h: float = float(s.get("min_humidity", 0.0))
+	var max_h: float = float(s.get("max_humidity", 1.0))
 	var avg_d: float = float(s["sum_disease"])  / float(total)
 	var avg_v: float = float(s["sum_health"])   / float(planted) if planted > 0 else 0.0
+	var min_v: float = float(s.get("min_health", 0.0))
+	var max_v: float = float(s.get("max_health", 1.0))
 	var avg_q: float = float(s["sum_quality"])  / float(planted) if planted > 0 else 0.0
-	print("Vineyard Tick: avg_humidity=%.2f avg_health=%.2f avg_disease=%.2f avg_quality=%.2f  (%d changed)" \
-			% [avg_h, avg_v, avg_d, avg_q, int(s.get("changed", 0))])
+	print("Vineyard Tick: avg_humidity=%.2f [%.2f–%.2f]  avg_health=%.2f [%.2f–%.2f]  avg_disease=%.2f  avg_quality=%.2f  (%d changed)" \
+			% [avg_h, min_h, max_h, avg_v, min_v, max_v, avg_d, avg_q, int(s.get("changed", 0))])
 
 
 # ─── Private — year tick ──────────────────────────────────────────────────────

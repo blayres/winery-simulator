@@ -1,33 +1,22 @@
 ## ClimateTileProcessor.gd
 ## Pure static class — applies weekly climate effects to one TileSimData.
 ##
-## Responsibility:
-##   Contains all the math for how climate affects a tile each week.
-##   Called by VineyardSimulation once per tile per climate tick.
+## Mutation order each week:
+##   1. Tile humidity  (rainfall gain, evaporation, temperature, wind, drainage)
+##   2. Disease risk   (humidity/condition pressure, passive decay, drainage)
+##   3. Vine health    (drought, flood, frost, heat — planted tiles only)
+##   4. Quality potential (stress benefit, excess humidity, health — planted only)
+##   effective_quality recomputed last.
 ##
-## Architecture note:
-##   No Node, no signals, no scene tree dependency.
-##   All tuning constants come from the cfg Dictionary (vineyard_sim_config.json
-##   "climate_effects" section) — nothing is hardcoded here.
-##   This makes the processor easy to unit-test and safe to call in a loop
-##   over thousands of tiles without overhead.
-##
-##   Mutation order each week:
-##     1. Tile humidity  (rainfall, temperature, wind, soil drainage)
-##     2. Disease risk   (humidity level, condition, wind, drainage, planted state)
-##     3. Vine health    (drought, flood, frost, heat — planted tiles only)
-##     4. Quality potential (water stress benefit, excess humidity, health — planted only)
-##   effective_quality is recomputed last from the updated values.
+## All tuning constants come from vineyard_sim_config.json "climate_effects".
+## No hardcoded magic numbers.
 
 class_name ClimateTileProcessor
 extends RefCounted
 
 
 ## Apply one week of climate effects to [param tile].
-## [param climate] — Dictionary from ClimateManager.get_current_state().
-## [param soil]    — Dictionary from soils.json for this tile's soil_type.
-## [param cfg]     — "climate_effects" section of vineyard_sim_config.json.
-## Mutates tile in-place. Returns true if any value changed meaningfully.
+## Returns true if any value changed by more than a small epsilon.
 static func apply(tile: TileSimData, climate: Dictionary,
 		soil: Dictionary, cfg: Dictionary) -> bool:
 
@@ -36,10 +25,10 @@ static func apply(tile: TileSimData, climate: Dictionary,
 	var v_cfg: Dictionary = _section(cfg, "vine_health")
 	var q_cfg: Dictionary = _section(cfg, "quality")
 
-	var old_humidity:  float = tile.humidity
-	var old_disease:   float = tile.disease_risk
-	var old_health:    float = tile.vine_health
-	var old_quality:   float = tile.quality_potential
+	var old_humidity: float = tile.humidity
+	var old_disease:  float = tile.disease_risk
+	var old_health:   float = tile.vine_health
+	var old_quality:  float = tile.quality_potential
 
 	_apply_humidity(tile, climate, soil, h_cfg)
 	_apply_disease(tile, climate, soil, d_cfg)
@@ -49,12 +38,11 @@ static func apply(tile: TileSimData, climate: Dictionary,
 		_apply_quality_potential(tile, q_cfg)
 		_recompute_effective_quality(tile)
 
-	# Return true if any field changed by more than a tiny epsilon.
 	return (
-		absf(tile.humidity         - old_humidity) > 0.001 or
-		absf(tile.disease_risk     - old_disease)  > 0.001 or
-		absf(tile.vine_health      - old_health)   > 0.001 or
-		absf(tile.quality_potential - old_quality) > 0.001
+		absf(tile.humidity          - old_humidity) > 0.001 or
+		absf(tile.disease_risk      - old_disease)  > 0.001 or
+		absf(tile.vine_health       - old_health)   > 0.001 or
+		absf(tile.quality_potential - old_quality)  > 0.001
 	)
 
 
@@ -67,27 +55,32 @@ static func _apply_humidity(tile: TileSimData, climate: Dictionary,
 	var temperature: float = float(climate.get("temperature", 15.0))
 	var wind:        float = float(climate.get("wind",        10.0))
 
-	# Soil properties moderate how much rainfall actually reaches the tile.
-	var drainage:   float = float(soil.get("base_drainage",      tile.drainage))
-	var retention:  float = float(soil.get("water_retention",    1.0 - tile.drainage))
+	var drainage:  float = float(soil.get("base_drainage",   tile.drainage))
+	var retention: float = float(soil.get("water_retention", 1.0 - tile.drainage))
 
-	# Rainfall adds humidity, moderated by drainage (well-drained soils gain less).
-	var rain_gain: float = rainfall * float(cfg.get("rainfall_gain_rate", 0.008))
+	# Rainfall gain — moderated by soil retention.
+	# retention_modifier is the minimum multiplier (for sandy/gravel soils).
+	var rain_gain: float = rainfall * float(cfg.get("rainfall_gain_rate", 0.0015))
 	rain_gain *= lerp(
-		float(cfg.get("retention_modifier", 0.4)),
+		float(cfg.get("retention_modifier", 0.3)),
 		1.0,
 		retention
 	)
 
-	# High temperature and wind dry the tile out.
-	var temp_loss: float = maxf(0.0, temperature - 15.0) * float(cfg.get("temp_dry_rate", 0.003))
-	var wind_loss: float = wind * float(cfg.get("wind_dry_rate", 0.002))
+	# Baseline evaporation — always runs regardless of temperature.
+	var evap: float = float(cfg.get("base_evaporation", 0.008))
 
-	# Good drainage accelerates moisture loss.
-	var drain_loss: float = drainage * float(cfg.get("drainage_modifier", 0.6)) * 0.01
+	# Temperature drying — only above 15°C.
+	var temp_loss: float = maxf(0.0, temperature - 15.0) * float(cfg.get("temp_dry_rate", 0.006))
+
+	# Wind drying.
+	var wind_loss: float = wind * float(cfg.get("wind_dry_rate", 0.003))
+
+	# Drainage loss — scales with soil drainage quality.
+	var drain_loss: float = drainage * float(cfg.get("drainage_modifier", 1.2)) * 0.01
 
 	tile.humidity = clampf(
-		tile.humidity + rain_gain - temp_loss - wind_loss - drain_loss,
+		tile.humidity + rain_gain - evap - temp_loss - wind_loss - drain_loss,
 		0.0, 1.0
 	)
 
@@ -97,37 +90,39 @@ static func _apply_humidity(tile: TileSimData, climate: Dictionary,
 static func _apply_disease(tile: TileSimData, climate: Dictionary,
 		soil: Dictionary, cfg: Dictionary) -> void:
 
-	var humidity:   float  = tile.humidity
-	var wind:       float  = float(climate.get("wind",      10.0))
-	var condition:  String = str(climate.get("condition",   "Clear"))
-	var drainage:   float  = float(soil.get("base_drainage", tile.drainage))
+	var humidity:  float  = tile.humidity
+	var wind:      float  = float(climate.get("wind",      10.0))
+	var condition: String = str(climate.get("condition",   "Clear"))
+	var drainage:  float  = float(soil.get("base_drainage", tile.drainage))
 
 	var delta: float = 0.0
 
 	# Wet, stagnant conditions increase disease pressure.
-	if humidity >= float(cfg.get("high_humidity_threshold", 0.70)):
-		delta += float(cfg.get("high_humidity_gain", 0.04))
+	if humidity >= float(cfg.get("high_humidity_threshold", 0.72)):
+		delta += float(cfg.get("high_humidity_gain", 0.018))
 
 	if condition == "Rainy":
-		delta += float(cfg.get("rainy_condition_gain", 0.03))
+		delta += float(cfg.get("rainy_condition_gain", 0.012))
 
 	if wind < float(cfg.get("low_wind_threshold", 8.0)):
-		delta += float(cfg.get("low_wind_gain", 0.02))
+		delta += float(cfg.get("low_wind_gain", 0.008))
 
 	# Dry and windy conditions reduce disease pressure.
 	if condition == "Dry":
-		delta -= float(cfg.get("dry_condition_loss", 0.03))
+		delta -= float(cfg.get("dry_condition_loss", 0.025))
 
 	if wind >= float(cfg.get("high_wind_threshold", 20.0)):
-		delta -= float(cfg.get("high_wind_loss", 0.02))
+		delta -= float(cfg.get("high_wind_loss", 0.020))
 
-	# Good drainage reduces standing moisture and disease.
 	if drainage >= 0.70:
-		delta -= float(cfg.get("good_drainage_loss", 0.01))
+		delta -= float(cfg.get("good_drainage_loss", 0.012))
 
-	# Unplanted tiles recover toward baseline faster.
+	# Passive weekly decay — disease always trends toward zero without pressure.
+	delta -= float(cfg.get("passive_decay", 0.005))
+
+	# Unplanted tiles recover faster.
 	if not tile.is_planted:
-		delta -= float(cfg.get("unplanted_recovery_rate", 0.02))
+		delta -= float(cfg.get("unplanted_recovery_rate", 0.030))
 
 	tile.disease_risk = clampf(tile.disease_risk + delta, 0.0, 1.0)
 
@@ -143,26 +138,21 @@ static func _apply_vine_health(tile: TileSimData, climate: Dictionary,
 
 	var delta: float = 0.0
 
-	# Drought stress — too dry damages vines.
-	if humidity < float(cfg.get("drought_threshold", 0.25)):
-		delta -= float(cfg.get("drought_damage", 0.04))
+	if humidity < float(cfg.get("drought_threshold", 0.20)):
+		delta -= float(cfg.get("drought_damage", 0.018))
+	elif humidity > float(cfg.get("flood_threshold", 0.82)):
+		delta -= float(cfg.get("flood_damage", 0.008))
+	elif humidity >= float(cfg.get("balanced_min", 0.30)) and \
+		 humidity <= float(cfg.get("balanced_max", 0.70)):
+		delta += float(cfg.get("balanced_recovery", 0.012))
 
-	# Waterlogging — too wet also damages vines (root rot pressure).
-	elif humidity > float(cfg.get("flood_threshold", 0.80)):
-		delta -= float(cfg.get("flood_damage", 0.02))
+	# Frost only damages when risk is meaningfully high.
+	var frost_threshold: float = float(cfg.get("frost_threshold", 0.40))
+	if frost_risk >= frost_threshold:
+		delta -= (frost_risk - frost_threshold) * float(cfg.get("frost_damage", 0.035))
 
-	# Balanced humidity allows slight recovery.
-	elif humidity >= float(cfg.get("balanced_min", 0.35)) and \
-		 humidity <= float(cfg.get("balanced_max", 0.65)):
-		delta += float(cfg.get("balanced_recovery", 0.01))
-
-	# Frost damages vines proportionally to frost_risk.
-	if frost_risk > 0.0:
-		delta -= frost_risk * float(cfg.get("frost_damage", 0.06))
-
-	# Heatwave stress.
 	if temp >= 32.0:
-		delta -= float(cfg.get("heat_damage", 0.03))
+		delta -= float(cfg.get("heat_damage", 0.015))
 
 	tile.vine_health = clampf(tile.vine_health + delta, 0.0, 1.0)
 
@@ -173,18 +163,15 @@ static func _apply_quality_potential(tile: TileSimData, cfg: Dictionary) -> void
 	var humidity: float = tile.humidity
 	var delta:    float = 0.0
 
-	# Mild water stress (slightly dry) concentrates flavour — classic viticulture.
-	if humidity >= float(cfg.get("stress_benefit_min", 0.28)) and \
-	   humidity <= float(cfg.get("stress_benefit_max", 0.38)):
-		delta += float(cfg.get("stress_gain", 0.005))
+	if humidity >= float(cfg.get("stress_benefit_min", 0.25)) and \
+	   humidity <= float(cfg.get("stress_benefit_max", 0.42)):
+		delta += float(cfg.get("stress_gain", 0.003))
 
-	# Excess humidity dilutes quality potential.
-	if humidity > float(cfg.get("excess_humidity_threshold", 0.75)):
-		delta -= float(cfg.get("excess_humidity_loss", 0.004))
+	if humidity > float(cfg.get("excess_humidity_threshold", 0.78)):
+		delta -= float(cfg.get("excess_humidity_loss", 0.002))
 
-	# Poor vine health degrades quality ceiling over time.
-	if tile.vine_health < float(cfg.get("low_health_threshold", 0.40)):
-		delta -= float(cfg.get("low_health_loss", 0.006))
+	if tile.vine_health < float(cfg.get("low_health_threshold", 0.35)):
+		delta -= float(cfg.get("low_health_loss", 0.003))
 
 	tile.quality_potential = clampf(tile.quality_potential + delta, 0.10, 1.0)
 
