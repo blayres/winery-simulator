@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="winery-simulator"
-run/main_scene="uid://bw7k2m3xqaqvn"
+run/main_scene="res://scenes/world/World.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 config/run/main_scene="res://scenes/world/World.tscn"
@@ -25,6 +25,7 @@ EconomyManager="*res://autoload/EconomyManager.gd"
 WineManager="*res://autoload/WineManager.gd"
 EventManager="*res://autoload/EventManager.gd"
 SaveManager="*res://autoload/SaveManager.gd"
+VineyardSimulation="*res://autoload/VineyardSimulation.gd"
 
 [physics]
 

@@ -3,29 +3,50 @@
     {
       "id": "limestone_clay",
       "name": "Limestone Clay",
-      "drainage": 0.6,
-      "water_retention": 0.7,
-      "mineral_richness": 0.9,
-      "quality_modifier": 1.15,
-      "notes": "The soul of Burgundy. Imparts minerality and structure."
+      "base_fertility":        0.80,
+      "base_drainage":         0.60,
+      "base_humidity":         0.65,
+      "quality_modifier":      1.20,
+      "mineral_richness":      0.90,
+      "water_retention":       0.70,
+      "color_hint":            "c8b89a",
+      "description": "The soul of Burgundy. Imparts minerality and structure."
     },
     {
-      "id": "sandy_gravel",
-      "name": "Sandy Gravel",
-      "drainage": 0.9,
-      "water_retention": 0.3,
-      "mineral_richness": 0.5,
-      "quality_modifier": 0.95,
-      "notes": "Well-drained and warm. Produces elegant, aromatic wines."
+      "id": "clay",
+      "name": "Clay",
+      "base_fertility":        0.70,
+      "base_drainage":         0.30,
+      "base_humidity":         0.80,
+      "quality_modifier":      1.00,
+      "mineral_richness":      0.60,
+      "water_retention":       0.90,
+      "color_hint":            "a0785a",
+      "description": "Heavy and moisture-retaining. Reliable but not prestigious."
     },
     {
-      "id": "alluvial_plain",
-      "name": "Alluvial Plain",
-      "drainage": 0.4,
-      "water_retention": 0.8,
-      "mineral_richness": 0.4,
-      "quality_modifier": 0.80,
-      "notes": "Fertile and productive. High yield, lower prestige."
+      "id": "gravel",
+      "name": "Gravel",
+      "base_fertility":        0.45,
+      "base_drainage":         0.95,
+      "base_humidity":         0.30,
+      "quality_modifier":      1.10,
+      "mineral_richness":      0.55,
+      "water_retention":       0.20,
+      "color_hint":            "b8a882",
+      "description": "Excellent drainage. Stresses vines beneficially, concentrating flavour."
+    },
+    {
+      "id": "sandy",
+      "name": "Sandy",
+      "base_fertility":        0.35,
+      "base_drainage":         0.90,
+      "base_humidity":         0.25,
+      "quality_modifier":      0.90,
+      "mineral_richness":      0.35,
+      "water_retention":       0.15,
+      "color_hint":            "d4c090",
+      "description": "Light and warm. Aromatic wines, lower structure."
     }
   ]
 }

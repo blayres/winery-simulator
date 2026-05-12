@@ -34,6 +34,7 @@ const FILE_REGISTRY: Dictionary = {
 	"regions":      "regions/regions.json",
 	"upgrades":     "upgrades/upgrades.json",
 	"world_config": "world_config.json",
+	"vineyard_sim": "simulation/vineyard_sim_config.json",
 }
 
 # ─── Signals ──────────────────────────────────────────────────────────────────

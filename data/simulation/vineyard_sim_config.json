@@ -1,0 +1,24 @@
+{
+  "humidity": {
+    "base_min":          0.20,
+    "base_max":          0.85,
+    "variation_radius":  2,
+    "variation_strength": 0.12,
+    "noise_scale":       0.18
+  },
+  "fertility": {
+    "variation_strength": 0.10
+  },
+  "vine": {
+    "max_age":           50,
+    "max_health":        1.0,
+    "min_health":        0.0,
+    "starting_health":   0.85,
+    "quality_base_min":  0.40,
+    "quality_base_max":  1.00
+  },
+  "disease_risk": {
+    "base":              0.05,
+    "humidity_factor":   0.20
+  }
+}
