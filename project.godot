@@ -14,6 +14,16 @@ config/name="winery-simulator"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+DataManager="*res://autoload/DataManager.gd"
+GameManager="*res://autoload/GameManager.gd"
+ClimateManager="*res://autoload/ClimateManager.gd"
+EconomyManager="*res://autoload/EconomyManager.gd"
+WineManager="*res://autoload/WineManager.gd"
+EventManager="*res://autoload/EventManager.gd"
+SaveManager="*res://autoload/SaveManager.gd"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

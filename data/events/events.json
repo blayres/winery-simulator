@@ -1,0 +1,65 @@
+{
+  "events": [
+    {
+      "id": "late_frost",
+      "title": "Late Frost Warning",
+      "description": "A bitter frost crept in overnight. Your young buds are at risk.",
+      "seasons": ["spring"],
+      "min_year": 1,
+      "chance": 0.25,
+      "one_shot": false,
+      "choices": [
+        {
+          "label": "Burn smudge pots (costs money, saves buds)",
+          "effects": [
+            { "type": "economy_delta", "value": -400.0 }
+          ]
+        },
+        {
+          "label": "Accept the loss and hope for the best",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "wine_critic_visit",
+      "title": "A Critic Arrives",
+      "description": "A renowned wine critic has heard of your estate and wishes to taste your best bottle.",
+      "seasons": ["winter"],
+      "min_year": 2,
+      "chance": 0.30,
+      "one_shot": false,
+      "choices": [
+        {
+          "label": "Present your finest aged wine",
+          "effects": []
+        },
+        {
+          "label": "Politely decline — you're not ready",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "drought_summer",
+      "title": "Scorching Summer",
+      "description": "The sun beats down relentlessly. The vines are stressed.",
+      "seasons": ["summer"],
+      "min_year": 1,
+      "chance": 0.20,
+      "one_shot": false,
+      "choices": [
+        {
+          "label": "Emergency irrigation (costly)",
+          "effects": [
+            { "type": "economy_delta", "value": -600.0 }
+          ]
+        },
+        {
+          "label": "Let the vines stress — it concentrates the fruit",
+          "effects": []
+        }
+      ]
+    }
+  ]
+}

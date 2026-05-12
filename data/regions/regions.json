@@ -1,0 +1,13 @@
+{
+  "regions": [
+    {
+      "id": "bourgogne",
+      "name": "Bourgogne",
+      "country": "France",
+      "climate_profile": "continental_warm",
+      "prestige_modifier": 1.3,
+      "allowed_grapes": ["pinot_noir", "chardonnay"],
+      "notes": "The spiritual home of Pinot Noir and Chardonnay."
+    }
+  ]
+}

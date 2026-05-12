@@ -1,0 +1,28 @@
+{
+  "grapes": [
+    {
+      "id": "pinot_noir",
+      "name": "Pinot Noir",
+      "color": "red",
+      "ripening": "early",
+      "frost_sensitivity": 0.8,
+      "drought_sensitivity": 0.5,
+      "ideal_temperature_range": [12, 20],
+      "ideal_rainfall_range": [500, 700],
+      "yield_per_tile": 400,
+      "notes": "Thin-skinned and temperamental. Rewards patience and perfect terroir."
+    },
+    {
+      "id": "chardonnay",
+      "name": "Chardonnay",
+      "color": "white",
+      "ripening": "early",
+      "frost_sensitivity": 0.7,
+      "drought_sensitivity": 0.4,
+      "ideal_temperature_range": [13, 21],
+      "ideal_rainfall_range": [450, 650],
+      "yield_per_tile": 500,
+      "notes": "Versatile and expressive. Reflects terroir faithfully."
+    }
+  ]
+}

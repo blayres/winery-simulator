@@ -1,0 +1,62 @@
+{
+  "profiles": [
+    {
+      "id": "pinot_noir_burgundy",
+      "name": "Pinot Noir",
+      "grape": "pinot_noir",
+      "region_hint": "Burgundy",
+      "aging_potential_years": 15,
+      "descriptor_tiers": {
+        "exceptional": [
+          "Silky tannins with haunting violet depth.",
+          "Ethereal red fruit, forest floor, and spice.",
+          "Perfectly poised — power and grace in one glass."
+        ],
+        "good": [
+          "Bright cherry with earthy undertones.",
+          "Elegant structure, soft finish.",
+          "Red berries and a whisper of oak."
+        ],
+        "average": [
+          "Light and pleasant, easy drinking.",
+          "Simple red fruit, short finish.",
+          "Correct but unremarkable."
+        ],
+        "poor": [
+          "Thin and acidic, lacking depth.",
+          "Unbalanced, harsh finish.",
+          "Disappointing — the vintage shows its struggles."
+        ]
+      }
+    },
+    {
+      "id": "chardonnay_burgundy",
+      "name": "Chardonnay",
+      "grape": "chardonnay",
+      "region_hint": "Burgundy",
+      "aging_potential_years": 10,
+      "descriptor_tiers": {
+        "exceptional": [
+          "Mineral tension with golden stone fruit and cream.",
+          "Breathtaking precision — Chablis meets Meursault.",
+          "Layered complexity that unfolds for hours."
+        ],
+        "good": [
+          "Ripe apple and citrus with a buttery edge.",
+          "Well-balanced, clean and refreshing.",
+          "Toasty oak integrated beautifully."
+        ],
+        "average": [
+          "Straightforward apple and pear.",
+          "Pleasant but lacks complexity.",
+          "Decent everyday white."
+        ],
+        "poor": [
+          "Flat and oxidised, lacking freshness.",
+          "Overly oaked, fruit buried.",
+          "Forgettable — the vines suffered this year."
+        ]
+      }
+    }
+  ]
+}

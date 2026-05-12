@@ -1,0 +1,37 @@
+{
+  "profiles": [
+    {
+      "id": "continental_warm",
+      "label": "Warm Continental",
+      "weight": 3,
+      "seasons": {
+        "spring": { "temperature": 14.0, "rainfall": 60.0, "humidity": 0.55, "frost_risk": 0.15 },
+        "summer": { "temperature": 26.0, "rainfall": 35.0, "humidity": 0.40, "frost_risk": 0.00 },
+        "autumn": { "temperature": 16.0, "rainfall": 55.0, "humidity": 0.50, "frost_risk": 0.05 },
+        "winter": { "temperature":  3.0, "rainfall": 45.0, "humidity": 0.65, "frost_risk": 0.60 }
+      }
+    },
+    {
+      "id": "continental_cool",
+      "label": "Cool Continental",
+      "weight": 2,
+      "seasons": {
+        "spring": { "temperature": 10.0, "rainfall": 70.0, "humidity": 0.65, "frost_risk": 0.30 },
+        "summer": { "temperature": 21.0, "rainfall": 50.0, "humidity": 0.50, "frost_risk": 0.00 },
+        "autumn": { "temperature": 12.0, "rainfall": 65.0, "humidity": 0.60, "frost_risk": 0.15 },
+        "winter": { "temperature": -1.0, "rainfall": 40.0, "humidity": 0.70, "frost_risk": 0.80 }
+      }
+    },
+    {
+      "id": "drought_year",
+      "label": "Drought Year",
+      "weight": 1,
+      "seasons": {
+        "spring": { "temperature": 18.0, "rainfall": 20.0, "humidity": 0.30, "frost_risk": 0.05 },
+        "summer": { "temperature": 34.0, "rainfall":  8.0, "humidity": 0.20, "frost_risk": 0.00 },
+        "autumn": { "temperature": 20.0, "rainfall": 15.0, "humidity": 0.25, "frost_risk": 0.02 },
+        "winter": { "temperature":  5.0, "rainfall": 30.0, "humidity": 0.45, "frost_risk": 0.40 }
+      }
+    }
+  ]
+}

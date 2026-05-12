@@ -1,0 +1,20 @@
+{
+  "starting_funds": 8000.0,
+  "base_prices": {
+    "wine_bottle":      12.0,
+    "grape_kg":          1.5,
+    "oak_barrel":      350.0,
+    "fertilizer_bag":   25.0,
+    "irrigation_unit": 200.0
+  },
+  "market_modifiers": {
+    "reputation_multiplier_per_point": 0.01,
+    "critic_score_bonus_threshold":    90,
+    "critic_score_bonus_multiplier":   1.5
+  },
+  "expenses": {
+    "worker_daily_wage":  80.0,
+    "land_tax_per_tile":  50.0,
+    "cellar_upkeep":     120.0
+  }
+}

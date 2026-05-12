@@ -1,0 +1,31 @@
+{
+  "soils": [
+    {
+      "id": "limestone_clay",
+      "name": "Limestone Clay",
+      "drainage": 0.6,
+      "water_retention": 0.7,
+      "mineral_richness": 0.9,
+      "quality_modifier": 1.15,
+      "notes": "The soul of Burgundy. Imparts minerality and structure."
+    },
+    {
+      "id": "sandy_gravel",
+      "name": "Sandy Gravel",
+      "drainage": 0.9,
+      "water_retention": 0.3,
+      "mineral_richness": 0.5,
+      "quality_modifier": 0.95,
+      "notes": "Well-drained and warm. Produces elegant, aromatic wines."
+    },
+    {
+      "id": "alluvial_plain",
+      "name": "Alluvial Plain",
+      "drainage": 0.4,
+      "water_retention": 0.8,
+      "mineral_richness": 0.4,
+      "quality_modifier": 0.80,
+      "notes": "Fertile and productive. High yield, lower prestige."
+    }
+  ]
+}

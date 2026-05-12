@@ -1,0 +1,22 @@
+{
+  "upgrades": [
+    {
+      "id": "oak_barrel_cellar",
+      "name": "Oak Barrel Cellar",
+      "cost": 2000.0,
+      "description": "Adds oak aging capacity. Improves wine complexity.",
+      "effects": {
+        "aging_quality_bonus": 0.10
+      }
+    },
+    {
+      "id": "irrigation_system",
+      "name": "Drip Irrigation",
+      "cost": 1500.0,
+      "description": "Reduces drought damage to vines.",
+      "effects": {
+        "drought_damage_reduction": 0.40
+      }
+    }
+  ]
+}
