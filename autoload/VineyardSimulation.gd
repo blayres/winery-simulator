@@ -38,6 +38,8 @@ func _ready() -> void:
 	DataManager.data_loaded.connect(_on_data_loaded)
 	# Connect to climate updates — this drives the weekly tile tick.
 	ClimateManager.climate_updated.connect(_on_climate_updated)
+	# Connect to year transition for vine aging.
+	TimeManager.year_changed.connect(_on_year_changed)
 
 	if DataManager.is_loaded("soils") and DataManager.is_loaded("vineyard_sim"):
 		_build_archetypes()
@@ -63,6 +65,8 @@ func initialize_grid(cols: int, rows: int) -> void:
 			_tile_data[_key(col, row)] = data
 
 	_seed_demo_vines(cols, rows)
+	# Initialize lifecycle stage and productivity for all seeded tiles.
+	_init_lifecycle_for_all()
 	simulation_initialized.emit()
 	print("VineyardSimulation: initialized %d tiles." % _tile_data.size())
 
@@ -189,6 +193,39 @@ func _log_tick_summary(s: Dictionary) -> void:
 			% [avg_h, avg_v, avg_d, avg_q, int(s.get("changed", 0))])
 
 
+# ─── Private — year tick ──────────────────────────────────────────────────────
+
+func _on_year_changed(_year: int) -> void:
+	if _tile_data.is_empty():
+		return
+	var lc_cfg: Dictionary = _get_cfg_section("lifecycle")
+	var climate_score: float = ClimateManager.weekly_climate_score
+	var counts: Dictionary = { "young": 0, "mature": 0, "old": 0, "declining": 0 }
+
+	for key: String in _tile_data:
+		var raw: Variant = _tile_data[key]
+		if not raw is TileSimData:
+			continue
+		var tile: TileSimData = raw
+		if not tile.is_planted:
+			tile.lifecycle_stage = VineLifecycle.STAGE_EMPTY
+			tile.productivity    = 0.0
+			continue
+		# Age by one year (4 seasons) at year transition.
+		tile.vine_age = mini(tile.vine_age + 4, int(_get_vine_cfg("max_age", 50)) * 4)
+		VineLifecycle.tick_year(tile, lc_cfg, climate_score)
+		recompute_quality_public(tile)
+		tile_data_changed.emit(tile)
+		var stage: String = tile.lifecycle_stage
+		if counts.has(stage):
+			counts[stage] = int(counts[stage]) + 1
+
+	print("Year Transition: %d young, %d mature, %d old, %d declining vines" % [
+		int(counts["young"]), int(counts["mature"]),
+		int(counts["old"]),   int(counts["declining"])
+	])
+
+
 # ─── Private — initialization ─────────────────────────────────────────────────
 
 func _on_data_loaded(key: String) -> void:
@@ -287,9 +324,13 @@ func _pick_soil_for(col: int, row: int) -> String:
 
 # ─── Private — per-season tick ───────────────────────────────────────────────
 
-## Season tick: ages vines. Climate tick handles health/disease/quality weekly.
+## Season tick: keeps lifecycle stage and productivity current.
+## Year tick (on year_changed) handles aging and stage effects.
 func _tick_vine(data: TileSimData) -> void:
-	data.vine_age = mini(data.vine_age + 1, int(_get_vine_cfg("max_age", 50)) * 4)
+	var lc_cfg: Dictionary = _get_cfg_section("lifecycle")
+	data.lifecycle_stage = VineLifecycle.stage_for_age(data.vine_age, lc_cfg)
+	data.productivity    = VineLifecycle.compute_productivity(data, lc_cfg,
+			ClimateManager.weekly_climate_score)
 	recompute_quality_public(data)
 
 
@@ -298,6 +339,25 @@ func _tick_vine(data: TileSimData) -> void:
 ## data to show immediately. Remove or replace with player actions later.
 func _seed_demo_vines(cols: int, rows: int) -> void:
 	SimDemoSeeder.seed_vines(self, cols, rows)
+
+
+## Sets lifecycle_stage and productivity on all tiles after seeding.
+## Ensures the inspector shows correct data from frame 1.
+func _init_lifecycle_for_all() -> void:
+	var lc_cfg: Dictionary = _get_cfg_section("lifecycle")
+	var climate_score: float = ClimateManager.weekly_climate_score
+	for key: String in _tile_data:
+		var raw: Variant = _tile_data[key]
+		if not raw is TileSimData:
+			continue
+		var tile: TileSimData = raw
+		if tile.is_planted:
+			tile.lifecycle_stage = VineLifecycle.stage_for_age(tile.vine_age, lc_cfg)
+			tile.productivity    = VineLifecycle.compute_productivity(
+					tile, lc_cfg, climate_score)
+		else:
+			tile.lifecycle_stage = VineLifecycle.STAGE_EMPTY
+			tile.productivity    = 0.0
 
 
 # ─── Private — helpers ────────────────────────────────────────────────────────

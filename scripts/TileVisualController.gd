@@ -34,10 +34,10 @@ const SOIL_COLORS: Dictionary = {
 const SOIL_COLOR_DEFAULT: Color = Color("8a9a7a")
 
 # ─── Vine overlay colors ──────────────────────────────────────────────────────
-## Tinted over the soil color when a vine is planted.
-const VINE_COLOR_YOUNG:    Color = Color("5a9e6a")   # bright fresh green
-const VINE_COLOR_MATURE:   Color = Color("3d7a4a")   # deep vineyard green
-const VINE_COLOR_OLD:      Color = Color("2d5c38")   # dark, gnarled
+const VINE_COLOR_YOUNG:     Color = Color("6aae78")   # bright fresh green
+const VINE_COLOR_MATURE:    Color = Color("3d7a4a")   # deep vineyard green
+const VINE_COLOR_OLD:       Color = Color("2d5c38")   # dark, concentrated
+const VINE_COLOR_DECLINING: Color = Color("6b6830")   # olive-brown, stressed
 
 # ─── Health tint ──────────────────────────────────────────────────────────────
 ## Lerp target when vine health is low.
@@ -64,21 +64,20 @@ static func compute_base_color(data: TileSimData, checkerboard: bool) -> Color:
 		base = base.darkened(0.06)
 
 	if not data.is_planted:
-		# Empty tile: tint slightly by humidity (wetter = slightly darker/greener).
 		return base.lerp(base.darkened(0.15), data.humidity * 0.4)
 
-	# Planted tile: blend toward vine color based on age.
+	# Planted tile: color driven by lifecycle stage.
 	var vine_color: Color
-	var age_years: int = data.vine_age / 4
-	if age_years < 3:
-		vine_color = VINE_COLOR_YOUNG
-	elif age_years < 20:
-		vine_color = VINE_COLOR_MATURE
-	else:
-		vine_color = VINE_COLOR_OLD
+	match data.lifecycle_stage:
+		"young":     vine_color = VINE_COLOR_YOUNG
+		"mature":    vine_color = VINE_COLOR_MATURE
+		"old":       vine_color = VINE_COLOR_OLD
+		"declining": vine_color = VINE_COLOR_DECLINING
+		_:           vine_color = VINE_COLOR_MATURE
 
-	# Blend soil → vine (vine coverage increases with age, caps at 70%).
-	var vine_blend: float = clampf(float(age_years) / 8.0, 0.25, 0.70)
+	# Blend soil → vine. Young vines show more soil; old vines are fully covered.
+	var age_years: int    = data.vine_age / 4
+	var vine_blend: float = clampf(float(age_years) / 8.0, 0.20, 0.75)
 	var result: Color     = base.lerp(vine_color, vine_blend)
 
 	# Health tint: poor health yellows the tile.

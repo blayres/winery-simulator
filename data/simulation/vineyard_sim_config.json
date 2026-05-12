@@ -21,13 +21,31 @@
     "base":              0.05,
     "humidity_factor":   0.20
   },
+  "lifecycle": {
+    "young_max_years":        3,
+    "mature_max_years":      25,
+    "old_max_years":         50,
+    "young_quality_cap":     0.65,
+    "old_quality_bonus":     0.12,
+    "declining_disease_gain": 0.03,
+    "declining_health_loss":  0.02,
+    "productivity": {
+      "young_base":      0.40,
+      "mature_base":     0.85,
+      "old_base":        0.65,
+      "declining_base":  0.30,
+      "health_weight":   0.50,
+      "disease_weight":  0.25,
+      "climate_weight":  0.25
+    }
+  },
   "climate_effects": {
     "humidity": {
-      "rainfall_gain_rate":    0.008,
-      "temp_dry_rate":         0.003,
-      "wind_dry_rate":         0.002,
-      "drainage_modifier":     0.6,
-      "retention_modifier":    0.4
+      "rainfall_gain_rate":  0.008,
+      "temp_dry_rate":       0.003,
+      "wind_dry_rate":       0.002,
+      "drainage_modifier":   0.6,
+      "retention_modifier":  0.4
     },
     "disease": {
       "high_humidity_threshold": 0.70,
@@ -42,24 +60,24 @@
       "unplanted_recovery_rate": 0.02
     },
     "vine_health": {
-      "drought_threshold":       0.25,
-      "drought_damage":          0.04,
-      "flood_threshold":         0.80,
-      "flood_damage":            0.02,
-      "balanced_min":            0.35,
-      "balanced_max":            0.65,
-      "balanced_recovery":       0.01,
-      "frost_damage":            0.06,
-      "heat_damage":             0.03
+      "drought_threshold":  0.25,
+      "drought_damage":     0.04,
+      "flood_threshold":    0.80,
+      "flood_damage":       0.02,
+      "balanced_min":       0.35,
+      "balanced_max":       0.65,
+      "balanced_recovery":  0.01,
+      "frost_damage":       0.06,
+      "heat_damage":        0.03
     },
     "quality": {
-      "stress_benefit_min":      0.28,
-      "stress_benefit_max":      0.38,
-      "stress_gain":             0.005,
+      "stress_benefit_min":        0.28,
+      "stress_benefit_max":        0.38,
+      "stress_gain":               0.005,
       "excess_humidity_threshold": 0.75,
-      "excess_humidity_loss":    0.004,
-      "low_health_threshold":    0.40,
-      "low_health_loss":         0.006
+      "excess_humidity_loss":      0.004,
+      "low_health_threshold":      0.40,
+      "low_health_loss":           0.006
     }
   }
 }

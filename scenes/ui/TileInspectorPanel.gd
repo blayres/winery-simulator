@@ -20,7 +20,7 @@ extends CanvasLayer
 
 # ─── Panel geometry ───────────────────────────────────────────────────────────
 const PANEL_W: float = 300.0
-const PANEL_H: float = 480.0
+const PANEL_H: float = 540.0
 const MARGIN:  float = 10.0
 
 # ─── Child nodes ──────────────────────────────────────────────────────────────
@@ -35,9 +35,11 @@ const MARGIN:  float = 10.0
 @onready var _lbl_planted:   Label = $RootPanel/Margin/VBox/PlantedRow
 @onready var _lbl_grape:     Label = $RootPanel/Margin/VBox/GrapeRow
 @onready var _lbl_age:       Label = $RootPanel/Margin/VBox/AgeRow
+@onready var _lbl_lifecycle: Label = $RootPanel/Margin/VBox/LifecycleRow
 @onready var _lbl_health:    Label = $RootPanel/Margin/VBox/HealthRow
 @onready var _lbl_disease:   Label = $RootPanel/Margin/VBox/DiseaseRow
 @onready var _lbl_quality:   Label = $RootPanel/Margin/VBox/QualityRow
+@onready var _lbl_prod:      Label = $RootPanel/Margin/VBox/ProductivityRow
 @onready var _lbl_hint:      Label = $RootPanel/Margin/VBox/HintRow
 
 # ─── State ────────────────────────────────────────────────────────────────────
@@ -112,19 +114,23 @@ func _refresh() -> void:
 
 	if d.is_planted:
 		var grape: String = d.grape_variety if d.grape_variety != "" else "unknown"
-		_lbl_planted.text = "Planted     yes"
-		_lbl_grape.text   = "Grape       %s" % grape
-		_lbl_age.text     = "Age         %s" % d.vine_age_label()
-		_lbl_health.text  = "Health      %s" % _bar(d.vine_health)
-		_lbl_disease.text = "Disease     %s" % _risk_label(d.disease_risk)
-		_lbl_quality.text = "Quality     %s" % _bar(d.effective_quality)
+		_lbl_planted.text   = "Planted     yes"
+		_lbl_grape.text     = "Grape       %s" % grape
+		_lbl_age.text       = "Age         %s" % d.vine_age_label()
+		_lbl_lifecycle.text = "Stage       %s" % d.lifecycle_stage.capitalize()
+		_lbl_health.text    = "Health      %s" % _bar(d.vine_health)
+		_lbl_disease.text   = "Disease     %s" % _risk_label(d.disease_risk)
+		_lbl_quality.text   = "Quality     %s" % _bar(d.effective_quality)
+		_lbl_prod.text      = "Productivity %s" % _bar(d.productivity)
 	else:
-		_lbl_planted.text = "Planted     empty"
-		_lbl_grape.text   = "Grape       —"
-		_lbl_age.text     = "Age         —"
-		_lbl_health.text  = "Health      —"
-		_lbl_disease.text = "Disease     —"
-		_lbl_quality.text = "Quality     —"
+		_lbl_planted.text   = "Planted     empty"
+		_lbl_grape.text     = "Grape       —"
+		_lbl_age.text       = "Age         —"
+		_lbl_lifecycle.text = "Stage       —"
+		_lbl_health.text    = "Health      —"
+		_lbl_disease.text   = "Disease     —"
+		_lbl_quality.text   = "Quality     —"
+		_lbl_prod.text      = "Productivity —"
 
 	_lbl_hint.text = "F2  show / hide"
 

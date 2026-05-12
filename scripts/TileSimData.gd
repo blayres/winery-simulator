@@ -65,6 +65,14 @@ extends Resource
 ## Recomputed by VineyardSimulation — cached here for fast reads by UI/renderer.
 @export var effective_quality: float = 0.0
 
+## Lifecycle stage: "empty" | "young" | "mature" | "old" | "declining"
+## Set by VineLifecycle.update_stage() each year.
+@export var lifecycle_stage: String = "empty"
+
+## 0.0–1.0  estimated yield/output capacity this season.
+## Combines age stage, health, disease, and climate score.
+@export var productivity: float = 0.0
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 ## Returns a human-readable summary string for debug display.
@@ -72,24 +80,20 @@ func summary() -> String:
 	var planted_str: String = grape_variety if is_planted else "empty"
 	return (
 		"[%d,%d] soil=%s  humidity=%.2f  fertility=%.2f\n" +
-		"       planted=%s  age=%d  health=%.2f  quality=%.2f  disease=%.2f"
+		"       planted=%s  stage=%s  age=%dy  health=%.2f  quality=%.2f  disease=%.2f  prod=%.2f"
 	) % [
 		grid_col, grid_row, soil_type, humidity, fertility,
-		planted_str, vine_age, vine_health, effective_quality, disease_risk
+		planted_str, lifecycle_stage, vine_age / 4,
+		vine_health, effective_quality, disease_risk, productivity
 	]
 
 
-## Returns the vine age category as a readable string.
+## Returns the vine age as a readable string including lifecycle stage.
 func vine_age_label() -> String:
 	if not is_planted:
 		return "—"
 	var years: int = vine_age / 4
-	if years < 3:
-		return "Young (%dy)" % years
-	elif years < 20:
-		return "Mature (%dy)" % years
-	else:
-		return "Old Vine (%dy)" % years
+	return "%s  (%dy)" % [lifecycle_stage.capitalize(), years]
 
 
 ## Returns a 0–3 health tier: 0=poor, 1=fair, 2=good, 3=excellent
