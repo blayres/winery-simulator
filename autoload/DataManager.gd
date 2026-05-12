@@ -25,14 +25,15 @@ const DATA_ROOT: String = "res://data/"
 # Registry: logical key → path relative to DATA_ROOT.
 # Add new data files here only — no other code changes needed.
 const FILE_REGISTRY: Dictionary = {
-	"grapes":   "grapes/grapes.json",
-	"soils":    "terroir/soils.json",
-	"climate":  "climate/climate_presets.json",
-	"events":   "events/events.json",
-	"wines":    "wines/wine_profiles.json",
-	"economy":  "economy/economy_config.json",
-	"regions":  "regions/regions.json",
-	"upgrades": "upgrades/upgrades.json",
+	"grapes":       "grapes/grapes.json",
+	"soils":        "terroir/soils.json",
+	"climate":      "climate/climate_presets.json",
+	"events":       "events/events.json",
+	"wines":        "wines/wine_profiles.json",
+	"economy":      "economy/economy_config.json",
+	"regions":      "regions/regions.json",
+	"upgrades":     "upgrades/upgrades.json",
+	"world_config": "world_config.json",
 }
 
 # ─── Signals ──────────────────────────────────────────────────────────────────

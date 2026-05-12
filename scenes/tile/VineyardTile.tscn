@@ -1,0 +1,28 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8qj3v5xqy8yk"]
+
+[ext_resource type="Script" path="res://scenes/tile/VineyardTile.gd" id="1_tile_script"]
+
+[node name="VineyardTile" type="Area2D"]
+script = ExtResource("1_tile_script")
+
+[node name="TileOutline" type="Polygon2D" parent="."]
+z_index = 0
+color = Color(0.164706, 0.290196, 0.207843, 1)
+polygon = PackedVector2Array(0, -32, 64, 0, 0, 32, -64, 0)
+
+[node name="TilePolygon" type="Polygon2D" parent="."]
+z_index = 1
+color = Color(0.290196, 0.486275, 0.34902, 1)
+polygon = PackedVector2Array(0, -32, 64, 0, 0, 32, -64, 0)
+
+[node name="CollisionShape" type="CollisionPolygon2D" parent="."]
+polygon = PackedVector2Array(0, -32, 64, 0, 0, 32, -64, 0)
+
+[node name="DebugLabel" type="Label" parent="."]
+offset_left = -12.0
+offset_top = -6.0
+offset_right = 28.0
+offset_bottom = 17.0
+theme_override_colors/font_color = Color(1, 1, 1, 0.5)
+theme_override_font_sizes/font_size = 10
+text = "0,0"
