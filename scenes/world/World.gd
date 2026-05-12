@@ -51,6 +51,9 @@ func _ready() -> void:
 	# GridSystem deferred its build waiting for this call.
 	_grid.build_when_ready()
 
+	# Put GameManager into PLAYING state so time can advance.
+	GameManager.start_game()
+
 	print("World: _ready() complete — grid build triggered.")
 
 
@@ -123,6 +126,30 @@ func _on_tile_data_changed(data: TileSimData) -> void:
 	var tile: VineyardTile = _grid.get_tile(data.grid_col, data.grid_row)
 	if tile != null:
 		tile.notify_sim_updated()
+
+
+# ─── Dev time controls ────────────────────────────────────────────────────────
+## Temporary developer shortcuts — remove or gate behind a debug flag later.
+##   Space            → advance one week
+##   Shift + Space    → advance one full season (4 weeks)
+##   T                → toggle auto-advance
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event is InputEventKey:
+		return
+	var k: InputEventKey = event
+	if not k.pressed:
+		return
+
+	if k.keycode == KEY_SPACE and k.shift_pressed:
+		TimeManager.advance_season_full()
+		get_viewport().set_input_as_handled()
+	elif k.keycode == KEY_SPACE:
+		TimeManager.advance_week()
+		get_viewport().set_input_as_handled()
+	elif k.keycode == KEY_T:
+		TimeManager.toggle_auto_advance()
+		get_viewport().set_input_as_handled()
 
 
 # ─── Private ──────────────────────────────────────────────────────────────────

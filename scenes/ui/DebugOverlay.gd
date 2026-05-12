@@ -1,24 +1,27 @@
 ## DebugOverlay.gd
-## Compact always-visible HUD: tile coords, soil, zoom, grid size, hints.
+## Compact always-visible HUD.
+## Shows: time state, selected tile, zoom, grid size, control hints.
 ## F1 toggles visibility.
-## Uses position+size (not anchors) because it is a direct child of a CanvasLayer.
+## Uses position+size (not anchors) — direct child of a CanvasLayer.
 
 class_name DebugOverlay
 extends CanvasLayer
 
-const PANEL_W: float = 330.0
-const PANEL_H: float = 130.0
+const PANEL_W: float = 340.0
+const PANEL_H: float = 210.0
 const MARGIN:  float = 10.0
 
 var _grid:   GridSystem       = null
 var _camera: CameraController = null
 
-@onready var _panel:    PanelContainer = $Panel
-@onready var _lbl_tile: Label = $Panel/Margin/VBox/TileLabel
-@onready var _lbl_soil: Label = $Panel/Margin/VBox/SoilLabel
-@onready var _lbl_zoom: Label = $Panel/Margin/VBox/ZoomLabel
-@onready var _lbl_grid: Label = $Panel/Margin/VBox/GridLabel
-@onready var _lbl_hint: Label = $Panel/Margin/VBox/HintLabel
+@onready var _panel:      PanelContainer = $Panel
+@onready var _lbl_time:   Label = $Panel/Margin/VBox/TimeLabel
+@onready var _lbl_auto:   Label = $Panel/Margin/VBox/AutoLabel
+@onready var _lbl_tile:   Label = $Panel/Margin/VBox/TileLabel
+@onready var _lbl_soil:   Label = $Panel/Margin/VBox/SoilLabel
+@onready var _lbl_zoom:   Label = $Panel/Margin/VBox/ZoomLabel
+@onready var _lbl_grid:   Label = $Panel/Margin/VBox/GridLabel
+@onready var _lbl_hint:   Label = $Panel/Margin/VBox/HintLabel
 
 func _ready() -> void:
 	_panel.visible = true
@@ -52,7 +55,18 @@ func init(grid: GridSystem, camera: CameraController) -> void:
 
 
 func _update_labels() -> void:
+	# ── Time ──────────────────────────────────────────────────────────────
+	_lbl_time.text = "Time   %s" % TimeManager.get_time_string()
+	_lbl_auto.text = "Auto   %s" % ("ON  (T to stop)" if TimeManager.auto_advance \
+			else "OFF  (T to start)")
+
+	# ── Selected tile ─────────────────────────────────────────────────────
 	if _grid == null:
+		_lbl_tile.text = "Tile   -"
+		_lbl_soil.text = "Soil   -"
+		_lbl_zoom.text = "Zoom   -"
+		_lbl_grid.text = "Grid   -"
+		_lbl_hint.text = "F1 overlay · F2 inspector"
 		return
 
 	var sel: VineyardTile = _grid.get_selected_tile()
@@ -76,4 +90,4 @@ func _update_labels() -> void:
 	else:
 		_lbl_zoom.text = "Zoom   -"
 
-	_lbl_hint.text = "F1 overlay · F2 inspector · WASD · scroll · MMB"
+	_lbl_hint.text = "F1 overlay · F2 inspector · Space week · Shift+Space season · T auto"

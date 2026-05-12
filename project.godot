@@ -20,6 +20,7 @@ config/run/main_scene="res://scenes/world/World.tscn"
 
 DataManager="*res://autoload/DataManager.gd"
 GameManager="*res://autoload/GameManager.gd"
+TimeManager="*res://autoload/TimeManager.gd"
 ClimateManager="*res://autoload/ClimateManager.gd"
 EconomyManager="*res://autoload/EconomyManager.gd"
 WineManager="*res://autoload/WineManager.gd"
