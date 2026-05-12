@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3 uid="uid://dxq7m2k9p3rvb"]
+
+[ext_resource type="Script" path="res://scenes/ui/DebugOverlay.gd" id="1_debug_script"]
+
+[node name="DebugOverlay" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_debug_script")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -280.0
+offset_top = -130.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/panel = null
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TileLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 13
+text = "Tile:  —"
+
+[node name="ZoomLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 13
+text = "Zoom:  —"
+
+[node name="GridLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 13
+text = "Grid:  —"
+
+[node name="HintLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.6, 0.8)
+theme_override_font_sizes/font_size = 11
+text = "F1 toggle  |  WASD pan  |  Scroll zoom  |  MMB drag"

@@ -5,6 +5,11 @@
 [node name="VineyardTile" type="Area2D"]
 script = ExtResource("1_tile_script")
 
+[node name="TileShadow" type="Polygon2D" parent="."]
+z_index = -1
+color = Color(0.1, 0.16, 0.12, 0.45)
+polygon = PackedVector2Array(0, -20, 66, 11, 0, 43, -66, 11)
+
 [node name="TileOutline" type="Polygon2D" parent="."]
 z_index = 0
 color = Color(0.164706, 0.290196, 0.207843, 1)
@@ -19,10 +24,11 @@ polygon = PackedVector2Array(0, -32, 64, 0, 0, 32, -64, 0)
 polygon = PackedVector2Array(0, -32, 64, 0, 0, 32, -64, 0)
 
 [node name="DebugLabel" type="Label" parent="."]
-offset_left = -12.0
-offset_top = -6.0
-offset_right = 28.0
-offset_bottom = 17.0
-theme_override_colors/font_color = Color(1, 1, 1, 0.5)
-theme_override_font_sizes/font_size = 10
+z_index = 10
+offset_left = -14.0
+offset_top = -7.0
+offset_right = 30.0
+offset_bottom = 16.0
+theme_override_colors/font_color = Color(1, 1, 1, 0.45)
+theme_override_font_sizes/font_size = 9
 text = "0,0"

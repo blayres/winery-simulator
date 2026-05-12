@@ -1,8 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://bw7k2m3xp9qvn"]
+[gd_scene load_steps=5 format=3 uid="uid://bw7k2m3xp9qvn"]
 
 [ext_resource type="Script" path="res://scenes/world/World.gd" id="1_world_script"]
 [ext_resource type="Script" path="res://systems/GridSystem.gd" id="2_grid_script"]
 [ext_resource type="Script" path="res://systems/CameraController.gd" id="3_camera_script"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DebugOverlay.tscn" id="4_debug_overlay"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1_world_script")
@@ -17,3 +18,5 @@ script = ExtResource("2_grid_script")
 
 [node name="WorldUI" type="CanvasLayer" parent="."]
 layer = 10
+
+[node name="DebugOverlay" parent="WorldUI" instance=ExtResource("4_debug_overlay")]

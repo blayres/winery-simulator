@@ -10,15 +10,27 @@
     "zoom_max": 2.5,
     "zoom_step": 0.15,
     "zoom_smooth_speed": 8.0,
-    "pan_speed_keyboard": 400.0,
-    "pan_speed_drag": 1.0,
-    "pan_smooth_speed": 10.0,
-    "bounds_margin": 200.0
+    "pan_speed_keyboard": 500.0,
+    "pan_speed_edge_scroll": 350.0,
+    "pan_smooth_speed": 12.0,
+    "edge_scroll_margin": 20.0,
+    "bounds_margin": 300.0
   },
   "tile_colors": {
-    "default":  "4a7c59",
-    "hover":    "6aab7a",
-    "selected": "f0c060",
-    "outline":  "2a4a35"
+    "default_a":  "4a7c59",
+    "default_b":  "527f61",
+    "hover":      "6aab7a",
+    "selected":   "f0c060",
+    "outline":    "2a4a35",
+    "shadow":     "1a2a1f"
+  },
+  "tile_animation": {
+    "hover_scale": 1.05,
+    "hover_duration": 0.15,
+    "select_scale": 1.08,
+    "select_duration": 0.2
+  },
+  "atmosphere": {
+    "background_color": "3d5a4a"
   }
 }
