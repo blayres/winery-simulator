@@ -1,0 +1,60 @@
+{
+  "_comment": "Thresholds used by ClimateManager to derive a readable condition label from weekly values.",
+
+  "conditions": [
+    {
+      "id": "frost_risk",
+      "label": "Frost Risk",
+      "rule": "frost_risk_above",
+      "threshold": 0.50
+    },
+    {
+      "id": "heatwave",
+      "label": "Heatwave",
+      "rule": "temp_above",
+      "threshold": 32.0
+    },
+    {
+      "id": "stormy",
+      "label": "Stormy",
+      "rule": "wind_above",
+      "threshold": 28.0
+    },
+    {
+      "id": "rainy",
+      "label": "Rainy",
+      "rule": "rainfall_above",
+      "threshold": 60.0
+    },
+    {
+      "id": "humid",
+      "label": "Humid",
+      "rule": "humidity_above",
+      "threshold": 0.70
+    },
+    {
+      "id": "dry",
+      "label": "Dry",
+      "rule": "rainfall_below",
+      "threshold": 15.0
+    },
+    {
+      "id": "clear",
+      "label": "Clear",
+      "rule": "default",
+      "threshold": 0.0
+    }
+  ],
+
+  "weekly_score": {
+    "ideal_temp_min":     15.0,
+    "ideal_temp_max":     25.0,
+    "ideal_rainfall_min": 20.0,
+    "ideal_rainfall_max": 55.0,
+    "ideal_humidity_min": 0.35,
+    "ideal_humidity_max": 0.65,
+    "frost_penalty":      0.40,
+    "heatwave_penalty":   0.30,
+    "drought_penalty":    0.25
+  }
+}
