@@ -36,7 +36,10 @@
       "prune":        80.0,
       "replant":     300.0,
       "harvest":      50.0,
-      "ferment":     100.0
+      "ferment":     100.0,
+      "ferment_stainless_steel": 200.0,
+      "ferment_old_oak":         350.0,
+      "ferment_new_oak":         600.0
     }
   },
   "ripeness": {

@@ -15,6 +15,8 @@ extends Node
 signal fermentation_completed(batch: WineBatch)
 signal batches_changed(total_batches: int)
 signal aging_tick_completed()
+## Emitted when the player changes the selected fermentation method.
+signal method_changed(method: String)
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 const METHOD_STAINLESS: String = "stainless_steel"
@@ -50,6 +52,10 @@ const METHOD_MODIFIERS: Dictionary = {
 # ─── State ────────────────────────────────────────────────────────────────────
 var _batches:  Array[WineBatch] = []
 var _next_id:  int              = 1
+
+## The method the player has selected for the next fermentation.
+## UI reads and writes this via set_selected_method() / get_selected_method().
+var selected_method: String = METHOD_STAINLESS
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 func _ready() -> void:
@@ -141,6 +147,37 @@ func get_all_batches() -> Array:
 
 func get_batch_count() -> int:
 	return _batches.size()
+
+
+## Set the player's chosen fermentation method. Emits method_changed.
+func set_selected_method(method: String) -> void:
+	if not METHOD_MODIFIERS.has(method):
+		push_warning("FermentationManager: unknown method '%s' — ignoring." % method)
+		return
+	selected_method = method
+	method_changed.emit(method)
+
+
+## Returns the currently selected method string.
+func get_selected_method() -> String:
+	return selected_method
+
+
+## Returns the cost for a given fermentation method from JSON config.
+## Falls back to the generic "ferment" cost if no per-method key exists.
+func get_method_cost(method: String) -> float:
+	var cfg: Dictionary    = DataManager.get_data("vineyard_sim")
+	var raw_pa: Variant    = cfg.get("player_actions", {})
+	if not raw_pa is Dictionary:
+		return 100.0
+	var raw_costs: Variant = (raw_pa as Dictionary).get("costs", {})
+	if not raw_costs is Dictionary:
+		return 100.0
+	var costs: Dictionary  = raw_costs
+	var key: String        = "ferment_" + method
+	if costs.has(key):
+		return float(costs[key])
+	return float(costs.get("ferment", 100.0))
 
 
 ## Remove a single batch by id. Used by WineMarket when a batch is sold.

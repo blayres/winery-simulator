@@ -105,3 +105,26 @@ func method_label() -> String:
 		"old_oak":         return "Old Oak"
 		"new_oak":         return "New Oak"
 	return fermentation_method.capitalize()
+
+
+## Wine style descriptor derived from the profile.
+## Gives the player a quick read on what kind of wine this is.
+func style_label() -> String:
+	# Oak-forward wines
+	if oak_influence >= 0.50:
+		if complexity >= 0.45:
+			return "Oaky & Complex"
+		return "Oaky & Bold"
+	# Fresh, fruit-driven wines
+	if freshness >= 0.55 and complexity < 0.35:
+		return "Fresh & Fruity"
+	# Balanced wines
+	if freshness >= 0.40 and complexity >= 0.35:
+		return "Balanced"
+	# Rich, full-bodied
+	if body >= 0.65:
+		return "Rich & Full"
+	# Simple but clean
+	if freshness >= 0.45:
+		return "Clean & Simple"
+	return "Rustic"

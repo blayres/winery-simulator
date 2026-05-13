@@ -205,8 +205,8 @@ func _on_load_failed(slot: int, error: String) -> void:
 ##   G  → [DEV] Force harvest-ready state on selected tile (debug only)
 ##
 ## Global hotkeys (no tile required):
-##   F  → Ferment most recent grape lot (stainless steel)
-##   C  → Toggle Wine Cellar panel
+##   F  → Ferment most recent grape lot (uses selected method — change in Cellar panel C)
+##   C  → Toggle Wine Cellar panel (also shows method selector)
 ##   S  → Sell most recent wine batch
 
 # Flash colors per action — defined here so they're easy to tune.

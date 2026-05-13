@@ -194,13 +194,15 @@ func harvest(col: int, row: int) -> String:
 
 
 ## Ferment: converts the most recent GrapeLot into a WineBatch.
-## [param method] — "stainless_steel" | "old_oak" | "new_oak"
-## No tile required — fermentation happens in the cellar.
-func ferment(method: String = "stainless_steel") -> String:
-	var cost: float = _action_cost("ferment")
-	if not WineMarket.spend(cost, "ferment"):
-		return "Ferment: not enough money — need €%.0f." % cost
-	var result: String = FermentationManager.ferment(method)
+## Uses FermentationManager.selected_method unless [param method] is explicitly provided.
+## Cost is per-method: stainless €200, old oak €350, new oak €600.
+func ferment(method: String = "") -> String:
+	# Use the player's selected method if none is explicitly passed.
+	var chosen: String = method if method != "" else FermentationManager.get_selected_method()
+	var cost: float    = FermentationManager.get_method_cost(chosen)
+	if not WineMarket.spend(cost, "ferment (%s)" % chosen):
+		return "Ferment: not enough money — need €%.0f for %s." % [cost, chosen]
+	var result: String = FermentationManager.ferment(chosen)
 	action_performed.emit(ACTION_FERMENT, -1, -1, result)
 	return result
 

@@ -67,6 +67,8 @@ func _ready() -> void:
 	VineyardActionSystem.action_performed.connect(_on_action_performed)
 	# Refresh when money changes — buttons may become affordable/unaffordable.
 	WineMarket.money_changed.connect(_on_money_changed)
+	# Refresh when fermentation method changes — cost shown on Ferment button changes.
+	FermentationManager.method_changed.connect(_on_method_changed)
 
 	_set_no_selection()
 
@@ -105,6 +107,10 @@ func _on_action_performed(_action: String, _col: int, _row: int, _result: String
 
 
 func _on_money_changed(_new_amount: float, _delta: float) -> void:
+	_refresh_buttons()
+
+
+func _on_method_changed(_method: String) -> void:
 	_refresh_buttons()
 
 
@@ -159,7 +165,8 @@ func _refresh_buttons() -> void:
 	_btn_prune.text        = "Prune  €%d"    % int(costs.get("prune",    80))
 	_btn_replant.text      = "Replant  €%d"  % int(costs.get("replant", 300))
 	_btn_harvest.text      = "Harvest  €%d"  % int(costs.get("harvest",  50))
-	_btn_ferment.text      = "Ferment  €%d"  % int(costs.get("ferment", 100))
+	var _ferment_cost_owned: float = FermentationManager.get_method_cost(FermentationManager.get_selected_method())
+	_btn_ferment.text      = "Ferment  €%d"  % int(_ferment_cost_owned)
 
 	_btn_irrigate.disabled = money < float(costs.get("irrigate", 50))
 	_btn_drain.disabled    = money < float(costs.get("drain",    70))
@@ -174,7 +181,7 @@ func _refresh_buttons() -> void:
 	) or money < float(costs.get("harvest", 50))
 
 	_btn_ferment.disabled = HarvestManager.get_lot_count() == 0 or \
-			money < float(costs.get("ferment", 100))
+			money < _ferment_cost_owned
 
 	if data.is_planted:
 		var harvest_hint: String = "  ★" if data.harvest_ready and not data.harvested_this_year else ""
@@ -207,7 +214,8 @@ func _set_no_selection() -> void:
 	_btn_prune.text        = "Prune  €%d"    % int(costs.get("prune",    80))
 	_btn_replant.text      = "Replant  €%d"  % int(costs.get("replant", 300))
 	_btn_harvest.text      = "Harvest  €%d"  % int(costs.get("harvest",  50))
-	_btn_ferment.text      = "Ferment  €%d"  % int(costs.get("ferment", 100))
+	var _ferment_cost_none: float = FermentationManager.get_method_cost(FermentationManager.get_selected_method())
+	_btn_ferment.text      = "Ferment  €%d"  % int(_ferment_cost_none)
 
 	_btn_irrigate.disabled = true
 	_btn_drain.disabled    = true
@@ -216,7 +224,7 @@ func _set_no_selection() -> void:
 	_btn_replant.disabled  = true
 	_btn_harvest.disabled  = true
 	_btn_ferment.disabled  = HarvestManager.get_lot_count() == 0 or \
-			money < float(costs.get("ferment", 100))
+			money < _ferment_cost_none
 
 
 # ─── Private — button handlers ────────────────────────────────────────────────
