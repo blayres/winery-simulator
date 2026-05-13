@@ -8,11 +8,16 @@
 ##   - Emits signals for UI and future systems (reputation, critics, etc.).
 ##
 ## Price formula:
-##   base_per_bottle = 8 + wine_quality × 22        (€8–€30 per bottle)
-##   maturity_mult   = stage bonus (peak +20%, declining -10%)
-##   aging_mult      = 1 + age_years × 0.04          (+4% per year aged)
+##   base_per_bottle = 4 + wine_quality × 14        (€4–€18 per bottle)
+##   maturity_mult   = stage bonus (peak +25%, declining -15%)
+##   aging_mult      = 1 + age_years × 0.05          (+5% per year aged)
 ##   prestige_mult   = grape variety prestige factor
 ##   total = base_per_bottle × maturity_mult × aging_mult × prestige_mult × bottles
+##
+## Balance targets (MVP pass):
+##   Poor wine (wq~0.25):    ~€1000–€2000 at year 0
+##   Typical wine (wq~0.42): ~€3000–€5000 at year 0, ~€5000–€7000 at peak
+##   Good wine (wq~0.53):    ~€5000–€7000 at year 0, ~€8000–€12000 at peak
 ##
 ## Architecture:
 ##   WineMarket is the ONLY place that modifies player_money.
@@ -28,20 +33,22 @@ signal batch_sold(batch_name: String, price: float, new_money: float)
 # ─── Constants ────────────────────────────────────────────────────────────────
 const STARTING_MONEY: float = 5000.0
 
-# Base price per bottle at quality 0 = €8, quality 1.0 = €30.
-const BASE_PRICE_MIN:  float = 8.0
-const BASE_PRICE_RANGE: float = 22.0
+# Base price per bottle: quality 0.0 = €4, quality 1.0 = €18.
+# Narrower range than before so quality differentiation is meaningful
+# without making bad wine worthless or good wine absurdly expensive.
+const BASE_PRICE_MIN:   float = 4.0
+const BASE_PRICE_RANGE: float = 14.0
 
 # Maturity stage price multipliers.
 const MATURITY_MULT: Dictionary = {
 	"young":      1.00,
 	"developing": 1.10,
-	"peak":       1.20,
-	"declining":  0.90,
+	"peak":       1.25,   # was 1.20 — peak wine is meaningfully better
+	"declining":  0.85,   # was 0.90 — declining wine is noticeably worse
 }
 
-# Aging bonus per year (4% per year).
-const AGING_BONUS_PER_YEAR: float = 0.04
+# Aging bonus per year (5% per year, was 4%).
+const AGING_BONUS_PER_YEAR: float = 0.05
 
 # Grape variety prestige multipliers.
 # Higher = more prestigious variety = higher price.

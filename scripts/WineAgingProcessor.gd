@@ -114,6 +114,8 @@ static func _stage_for(age: int, peak_year: int) -> String:
 
 
 ## Bell-curve quality: rises to peak_year, then declines.
+## Starts at 70% of peak quality at creation (age=0) to avoid a year-1 quality crash.
+## The curve reaches 1.0 (full peak quality) at peak_year, then falls.
 static func _quality_at_age(batch: WineBatch, peak_year: int) -> float:
 	var age: float  = float(batch.age_years)
 	var peak: float = float(peak_year)
@@ -123,12 +125,14 @@ static func _quality_at_age(batch: WineBatch, peak_year: int) -> float:
 
 	var curve: float
 	if t <= 1.0:
-		# Rising phase: smooth ease-in to peak.
-		curve = t * t * (3.0 - 2.0 * t)   # smoothstep
+		# Rising phase: smoothstep from 0→1, then offset so it starts at 0.70.
+		# curve(0) = 0.70, curve(1) = 1.00 — no quality crash in year 1.
+		var ss: float = t * t * (3.0 - 2.0 * t)   # smoothstep 0→1
+		curve = 0.70 + 0.30 * ss
 	else:
 		# Declining phase: steeper fall after peak.
 		var over: float = t - 1.0
-		curve = 1.0 - clampf(over * over * 1.5, 0.0, 1.0)
+		curve = maxf(1.0 - over * over * 1.5, 0.0)
 
 	# Scale by the batch's base quality (aging can't exceed original ceiling).
 	var base_quality: float = (

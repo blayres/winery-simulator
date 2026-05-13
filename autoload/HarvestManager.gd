@@ -176,25 +176,37 @@ func _create_lot(data: TileSimData) -> GrapeLot:
 	return lot
 
 
-## Grape quality formula — all factors contribute, quality_potential caps ceiling.
+## Grape quality formula — additive condition score with soft floors on modifiers.
+##
+## The old formula multiplied 5+ factors together, compressing the range to 0.05–0.35.
+## This formula uses an additive condition score so good ripeness/sugar/acidity
+## can produce meaningful quality even with imperfect vine health.
+## quality_potential still acts as a hard ceiling.
 func _compute_quality(data: TileSimData) -> float:
-	# Ripeness timing: peak at 0.80–0.90, penalty for under/over.
+	# Ripeness timing: peak at 0.75–0.95, penalty outside that window.
 	var ripe_score: float
 	if data.ripeness < 0.75:
-		ripe_score = data.ripeness / 0.75  # underripe penalty
+		ripe_score = data.ripeness / 0.75        # underripe penalty
 	elif data.ripeness > 0.95:
 		ripe_score = 1.0 - (data.ripeness - 0.95) * 3.0  # overripe penalty
 	else:
-		ripe_score = 1.0  # ideal window
+		ripe_score = 1.0                          # ideal window
 
-	# Sugar/acidity balance: reward when both are meaningful.
-	var balance: float = (data.sugar_level * 0.5 + data.acidity_level * 0.5)
+	# Additive condition score from ripeness, sugar, and acidity.
+	# Each contributes independently — a great sugar year can compensate
+	# for slightly low acidity.
+	var condition: float = ripe_score * 0.35 + data.sugar_level * 0.35 \
+			+ data.acidity_level * 0.30
 
-	# Vine condition modifiers.
-	var health_mod:   float = data.vine_health
-	var prod_mod:     float = data.productivity
-	var disease_mod:  float = 1.0 - data.disease_risk * 0.5
+	# Vine health: floor at 0.50 so even stressed vines produce something.
+	var health_factor: float = 0.50 + data.vine_health * 0.50
 
-	var raw: float = ripe_score * balance * health_mod * prod_mod * disease_mod
-	# Quality potential is the ceiling.
+	# Disease: floor at 0.85 — disease hurts but doesn't zero out quality.
+	var disease_factor: float = 0.85 + (1.0 - data.disease_risk) * 0.15
+
+	# Productivity: floor at 0.60 — low-yield vines still make decent wine.
+	var prod_factor: float = 0.60 + data.productivity * 0.40
+
+	var raw: float = condition * health_factor * disease_factor * prod_factor
+	# quality_potential is the hard ceiling (soil + terroir).
 	return clampf(raw * data.quality_potential, 0.0, 1.0)

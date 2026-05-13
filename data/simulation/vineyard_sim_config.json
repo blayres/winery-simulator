@@ -35,8 +35,8 @@
       "treat":       120.0,
       "prune":        80.0,
       "replant":     300.0,
-      "harvest":     100.0,
-      "ferment":     200.0
+      "harvest":      50.0,
+      "ferment":     100.0
     }
   },
   "ripeness": {

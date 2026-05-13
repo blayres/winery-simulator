@@ -49,12 +49,13 @@ func summary() -> String:
 
 
 ## Quality tier label for UI display.
+## Thresholds calibrated to the actual grape_quality output range (~0.20–0.55).
 func quality_label() -> String:
-	if estimated_grape_quality >= 0.85:
+	if estimated_grape_quality >= 0.50:
 		return "Exceptional"
-	elif estimated_grape_quality >= 0.70:
+	elif estimated_grape_quality >= 0.38:
 		return "Good"
-	elif estimated_grape_quality >= 0.50:
+	elif estimated_grape_quality >= 0.25:
 		return "Average"
 	else:
 		return "Poor"

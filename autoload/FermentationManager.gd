@@ -241,7 +241,7 @@ func _create_batch(lot: GrapeLot, method: String) -> WineBatch:
 
 	# ── Freshness — from acidity + method ─────────────────────────────────
 	var freshness_bonus: float = float(mods.get("freshness_bonus", 0.0))
-	b.freshness = clampf(lot.acidity_level * 0.8 + freshness_bonus, 0.0, 1.0)
+	b.freshness = clampf(lot.acidity_level * 0.7 + freshness_bonus, 0.0, 1.0)
 
 	# ── Body — from ripeness, productivity, and grape quality ─────────────
 	b.body = clampf(
@@ -251,26 +251,28 @@ func _create_batch(lot: GrapeLot, method: String) -> WineBatch:
 
 	# ── Complexity — from grape quality + method ──────────────────────────
 	var complexity_bonus: float = float(mods.get("complexity_bonus", 0.0))
-	b.complexity = clampf(lot.estimated_grape_quality * 0.75 + complexity_bonus, 0.0, 1.0)
+	b.complexity = clampf(lot.estimated_grape_quality * 0.80 + complexity_bonus, 0.0, 1.0)
 
 	# ── Oak influence — purely from method ────────────────────────────────
 	b.oak_influence = clampf(float(mods.get("oak_influence", 0.0)), 0.0, 1.0)
 
-	# ── Wine quality — weighted combination ──────────────────────────────
+	# ── Wine quality — grape_quality is the primary driver (50%).
+	# Freshness and body provide a floor; complexity adds nuance.
+	# This keeps quality range meaningful: ~0.25 (poor) to ~0.55 (excellent).
 	var quality_mult: float = float(mods.get("quality_multiplier", 1.0))
 	var raw_quality: float  = (
-		lot.estimated_grape_quality * 0.40 +
-		b.freshness                 * 0.20 +
+		lot.estimated_grape_quality * 0.50 +
+		b.freshness                 * 0.15 +
 		b.body                      * 0.15 +
-		b.complexity                * 0.25
+		b.complexity                * 0.20
 	)
 	b.wine_quality = clampf(raw_quality * quality_mult, 0.0, 1.0)
 
 	# ── Bottle estimate — productivity × method multiplier ────────────────
 	var bottles_mult: float = float(mods.get("bottles_multiplier", 1.0))
-	# Base: 400 bottles per tile at full productivity.
-	b.bottles_estimated = int(400.0 * lot.productivity * bottles_mult)
-	b.bottles_estimated = maxi(b.bottles_estimated, 12)   # minimum 12 bottles
+	# Base: 500 bottles per tile at full productivity (was 400).
+	b.bottles_estimated = int(500.0 * lot.productivity * bottles_mult)
+	b.bottles_estimated = maxi(b.bottles_estimated, 24)   # minimum 24 bottles
 
 	# ── Aging potential — computed last (needs all other fields set) ──────
 	WineAgingProcessor.compute_aging_potential(b)

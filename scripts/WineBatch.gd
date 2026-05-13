@@ -86,12 +86,13 @@ func maturity_label() -> String:
 
 
 ## Quality tier label.
+## Thresholds calibrated to the actual wine_quality output range (~0.25–0.55).
 func quality_label() -> String:
-	if wine_quality >= 0.85:
+	if wine_quality >= 0.60:
 		return "Exceptional"
-	elif wine_quality >= 0.70:
+	elif wine_quality >= 0.45:
 		return "Good"
-	elif wine_quality >= 0.50:
+	elif wine_quality >= 0.30:
 		return "Average"
 	else:
 		return "Poor"
