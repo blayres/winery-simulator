@@ -138,21 +138,25 @@ static func _apply_vine_health(tile: TileSimData, climate: Dictionary,
 
 	var delta: float = 0.0
 
-	if humidity < float(cfg.get("drought_threshold", 0.20)):
-		delta -= float(cfg.get("drought_damage", 0.018))
-	elif humidity > float(cfg.get("flood_threshold", 0.82)):
-		delta -= float(cfg.get("flood_damage", 0.008))
-	elif humidity >= float(cfg.get("balanced_min", 0.30)) and \
-		 humidity <= float(cfg.get("balanced_max", 0.70)):
-		delta += float(cfg.get("balanced_recovery", 0.012))
+	# Passive baseline recovery — vines always trend toward survival.
+	# Keeps health from permanently collapsing without player intervention.
+	delta += float(cfg.get("passive_recovery", 0.004))
+
+	if humidity < float(cfg.get("drought_threshold", 0.18)):
+		delta -= float(cfg.get("drought_damage", 0.010))
+	elif humidity > float(cfg.get("flood_threshold", 0.84)):
+		delta -= float(cfg.get("flood_damage", 0.004))
+	elif humidity >= float(cfg.get("balanced_min", 0.25)) and \
+		 humidity <= float(cfg.get("balanced_max", 0.75)):
+		delta += float(cfg.get("balanced_recovery", 0.018))
 
 	# Frost only damages when risk is meaningfully high.
-	var frost_threshold: float = float(cfg.get("frost_threshold", 0.40))
+	var frost_threshold: float = float(cfg.get("frost_threshold", 0.45))
 	if frost_risk >= frost_threshold:
-		delta -= (frost_risk - frost_threshold) * float(cfg.get("frost_damage", 0.035))
+		delta -= (frost_risk - frost_threshold) * float(cfg.get("frost_damage", 0.025))
 
 	if temp >= 32.0:
-		delta -= float(cfg.get("heat_damage", 0.015))
+		delta -= float(cfg.get("heat_damage", 0.010))
 
 	tile.vine_health = clampf(tile.vine_health + delta, 0.0, 1.0)
 

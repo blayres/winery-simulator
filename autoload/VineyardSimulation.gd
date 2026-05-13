@@ -149,21 +149,25 @@ func _on_climate_updated(climate_state: Dictionary) -> void:
 
 func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary,
 		ripeness_cfg: Dictionary, season: int) -> Dictionary:
-	var changed:        int   = 0
-	var sum_humidity:   float = 0.0
-	var sum_health:     float = 0.0
-	var sum_disease:    float = 0.0
-	var sum_quality:    float = 0.0
-	var sum_ripeness:   float = 0.0
-	var sum_sugar:      float = 0.0
-	var sum_acidity:    float = 0.0
-	var ready_count:    int   = 0
-	var min_humidity:   float = 1.0
-	var max_humidity:   float = 0.0
-	var min_health:     float = 1.0
-	var max_health:     float = 0.0
-	var planted:        int   = 0
-	var total:          int   = 0
+	var changed:           int   = 0
+	var sum_humidity:      float = 0.0
+	var sum_health:        float = 0.0
+	var sum_disease:       float = 0.0
+	var sum_quality:       float = 0.0
+	var sum_ripeness:      float = 0.0
+	var sum_sugar:         float = 0.0
+	var sum_acidity:       float = 0.0
+	var ready_count:       int   = 0
+	var mature_count:      int   = 0
+	var ripened_count:     int   = 0
+	var skipped_season:    int   = 0
+	var skipped_spring:    int   = 0
+	var min_humidity:      float = 1.0
+	var max_humidity:      float = 0.0
+	var min_health:        float = 1.0
+	var max_health:        float = 0.0
+	var planted:           int   = 0
+	var total:             int   = 0
 
 	for key: String in _tile_data:
 		var raw: Variant = _tile_data[key]
@@ -174,7 +178,17 @@ func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary,
 
 		var soil: Dictionary = _get_archetype(tile.soil_type)
 		var climate_changed: bool = ClimateTileProcessor.apply(tile, climate_state, soil, effects_cfg)
-		var ripeness_changed: bool = GrapeRipenessProcessor.apply(tile, climate_state, ripeness_cfg, season)
+
+		var ripe_result: Dictionary = GrapeRipenessProcessor.apply(tile, climate_state, ripeness_cfg, season)
+		var ripeness_changed: bool  = bool(ripe_result.get("ripened", false)) and \
+				absf(float(ripe_result.get("gain", 0.0))) > 0.001
+
+		if bool(ripe_result.get("ripened", false)):
+			ripened_count += 1
+		elif bool(ripe_result.get("skipped_season", false)):
+			skipped_season += 1
+		elif bool(ripe_result.get("skipped_spring_reset", false)):
+			skipped_spring += 1
 
 		if climate_changed or ripeness_changed:
 			changed += 1
@@ -185,24 +199,29 @@ func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary,
 		max_humidity   = maxf(max_humidity, tile.humidity)
 		sum_disease   += tile.disease_risk
 		if tile.is_planted:
-			planted     += 1
-			sum_health  += tile.vine_health
-			min_health   = minf(min_health, tile.vine_health)
-			max_health   = maxf(max_health, tile.vine_health)
+			planted    += 1
+			sum_health += tile.vine_health
+			min_health  = minf(min_health, tile.vine_health)
+			max_health  = maxf(max_health, tile.vine_health)
 			sum_quality  += tile.quality_potential
 			sum_ripeness += tile.ripeness
 			sum_sugar    += tile.sugar_level
 			sum_acidity  += tile.acidity_level
 			if tile.harvest_ready:
 				ready_count += 1
+			if tile.lifecycle_stage == "mature" or tile.lifecycle_stage == "old":
+				mature_count += 1
 
 	return {
 		"total": total, "changed": changed, "planted": planted,
+		"mature_count":   mature_count,   "ready_count":    ready_count,
+		"ripened_count":  ripened_count,  "skipped_season": skipped_season,
+		"skipped_spring": skipped_spring,
 		"sum_humidity": sum_humidity, "min_humidity": min_humidity, "max_humidity": max_humidity,
 		"sum_health":   sum_health,   "min_health":   min_health,   "max_health":   max_health,
 		"sum_disease":  sum_disease,  "sum_quality":  sum_quality,
 		"sum_ripeness": sum_ripeness, "sum_sugar":    sum_sugar,
-		"sum_acidity":  sum_acidity,  "ready_count":  ready_count,
+		"sum_acidity":  sum_acidity,
 	}
 
 
@@ -211,27 +230,27 @@ func _log_tick_summary(s: Dictionary) -> void:
 	var planted: int = int(s.get("planted", 0))
 	if total == 0:
 		return
+
 	var avg_h: float = float(s["sum_humidity"]) / float(total)
-	var min_h: float = float(s.get("min_humidity", 0.0))
-	var max_h: float = float(s.get("max_humidity", 1.0))
 	var avg_d: float = float(s["sum_disease"])  / float(total)
 	var avg_v: float = float(s["sum_health"])   / float(planted) if planted > 0 else 0.0
-	var min_v: float = float(s.get("min_health", 0.0))
-	var max_v: float = float(s.get("max_health", 1.0))
 	var avg_q: float = float(s["sum_quality"])  / float(planted) if planted > 0 else 0.0
-	print("Vineyard Tick: avg_humidity=%.2f [%.2f–%.2f]  avg_health=%.2f [%.2f–%.2f]  avg_disease=%.2f  avg_quality=%.2f  (%d changed)" \
-			% [avg_h, min_h, max_h, avg_v, min_v, max_v, avg_d, avg_q, int(s.get("changed", 0))])
+	var mature: int  = int(s.get("mature_count", 0))
+	var ready:  int  = int(s.get("ready_count",  0))
 
-	# Ripeness summary — print during ripening seasons (summer=1, autumn=2)
-	# even when ripeness is 0, so the player can see it's being tracked.
+	print("Vineyard: health=%.2f  humidity=%.2f  disease=%.2f  quality=%.2f  mature=%d  ready=%d  (%d changed)" \
+			% [avg_v, avg_h, avg_d, avg_q, mature, ready, int(s.get("changed", 0))])
+
+	# Ripeness line — always print during Summer (1) and Autumn (2).
 	var current_season: int = TimeManager.current_season
 	if planted > 0 and (current_season == 1 or current_season == 2):
-		var avg_r: float = float(s.get("sum_ripeness", 0.0)) / float(planted)
-		var avg_s: float = float(s.get("sum_sugar",    0.0)) / float(planted)
-		var avg_a: float = float(s.get("sum_acidity",  0.0)) / float(planted)
-		var ready: int   = int(s.get("ready_count", 0))
-		print("Ripeness Tick: avg_ripeness=%.2f avg_sugar=%.2f avg_acidity=%.2f ready_tiles=%d" \
-				% [avg_r, avg_s, avg_a, ready])
+		var avg_r: float    = float(s.get("sum_ripeness", 0.0)) / float(planted)
+		var avg_s: float    = float(s.get("sum_sugar",    0.0)) / float(planted)
+		var avg_a: float    = float(s.get("sum_acidity",  0.0)) / float(planted)
+		var ripened: int    = int(s.get("ripened_count",  0))
+		var skipped_s: int  = int(s.get("skipped_season", 0))
+		print("Ripeness:  avg=%.2f  sugar=%.2f  acidity=%.2f  ready=%d/%d mature  [ripened=%d skipped_season=%d]" \
+				% [avg_r, avg_s, avg_a, ready, mature, ripened, skipped_s])
 
 
 # ─── Private — year tick ──────────────────────────────────────────────────────
