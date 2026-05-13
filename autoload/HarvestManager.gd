@@ -92,6 +92,15 @@ func clear_lots() -> void:
 	lots_changed.emit(0)
 
 
+## Removes a single lot by id. Used by FermentationManager when consuming a lot.
+func remove_lot(lot_id: int) -> void:
+	for i: int in _lots.size():
+		if _lots[i].lot_id == lot_id:
+			_lots.remove_at(i)
+			lots_changed.emit(_lots.size())
+			return
+
+
 # ─── Save / Load interface ────────────────────────────────────────────────────
 
 func get_save_data() -> Dictionary:

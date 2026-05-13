@@ -31,6 +31,7 @@ const ACTION_TREAT:    String = "treat_disease"
 const ACTION_PRUNE:    String = "prune"
 const ACTION_REPLANT:  String = "replant"
 const ACTION_HARVEST:  String = "harvest"
+const ACTION_FERMENT:  String = "ferment"
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -151,8 +152,16 @@ func replant(col: int, row: int, grape_id: String = "") -> String:
 ## Requires: planted, harvest_ready, health > 0, productivity > 0, not already harvested.
 func harvest(col: int, row: int) -> String:
 	var result: String = HarvestManager.harvest(col, row)
-	# HarvestManager handles its own commit/signal — just emit action_performed.
 	action_performed.emit(ACTION_HARVEST, col, row, result)
+	return result
+
+
+## Ferment: converts the most recent GrapeLot into a WineBatch.
+## [param method] — "stainless_steel" | "old_oak" | "new_oak"
+## No tile required — fermentation happens in the cellar.
+func ferment(method: String = "stainless_steel") -> String:
+	var result: String = FermentationManager.ferment(method)
+	action_performed.emit(ACTION_FERMENT, -1, -1, result)
 	return result
 
 

@@ -144,6 +144,9 @@ func _on_tile_data_changed(data: TileSimData) -> void:
 ##   R  → Replant       (plant or replace vine)
 ##   H  → Harvest       (collect ripe grapes — harvest_ready only)
 ##   G  → [DEV] Force harvest-ready state on selected tile (debug only)
+##
+## Global hotkeys (no tile required):
+##   F  → Ferment most recent grape lot (stainless steel)
 
 # Flash colors per action — defined here so they're easy to tune.
 const FLASH_IRRIGATE: Color = Color(0.40, 0.70, 1.00, 1.0)   # blue
@@ -152,6 +155,7 @@ const FLASH_TREAT:    Color = Color(0.40, 1.00, 0.55, 1.0)   # green
 const FLASH_PRUNE:    Color = Color(0.90, 0.90, 0.40, 1.0)   # yellow
 const FLASH_REPLANT:  Color = Color(0.55, 1.00, 0.55, 1.0)   # bright green
 const FLASH_HARVEST:  Color = Color(1.00, 0.85, 0.20, 1.0)   # golden
+const FLASH_FERMENT:  Color = Color(0.80, 0.40, 0.90, 1.0)   # purple/wine
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey:
@@ -212,6 +216,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			var result: String = VineyardActionSystem.debug_force_harvest_ready(col, row)
 			_flash_tile(sel, FLASH_HARVEST)
 			get_viewport().set_input_as_handled()
+
+	# ── Ferment — does not require a selected tile ────────────────────────
+	if k.keycode == KEY_F:
+		var result: String = VineyardActionSystem.ferment()
+		print("Ferment: %s" % result)
+		get_viewport().set_input_as_handled()
 
 
 func _flash_tile(tile: VineyardTile, color: Color) -> void:

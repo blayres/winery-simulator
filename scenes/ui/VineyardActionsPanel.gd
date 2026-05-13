@@ -19,7 +19,7 @@ extends CanvasLayer
 
 # ─── Panel geometry ───────────────────────────────────────────────────────────
 const PANEL_W: float = 160.0
-const PANEL_H: float = 300.0
+const PANEL_H: float = 340.0
 const MARGIN:  float = 10.0
 
 # ─── Flash colors (match World.gd) ───────────────────────────────────────────
@@ -29,6 +29,7 @@ const FLASH_TREAT:    Color = Color(0.40, 1.00, 0.55, 1.0)
 const FLASH_PRUNE:    Color = Color(0.90, 0.90, 0.40, 1.0)
 const FLASH_REPLANT:  Color = Color(0.55, 1.00, 0.55, 1.0)
 const FLASH_HARVEST:  Color = Color(1.00, 0.85, 0.20, 1.0)
+const FLASH_FERMENT:  Color = Color(0.80, 0.40, 0.90, 1.0)
 
 # ─── Child nodes ──────────────────────────────────────────────────────────────
 @onready var _root_panel:   PanelContainer = $RootPanel
@@ -40,6 +41,7 @@ const FLASH_HARVEST:  Color = Color(1.00, 0.85, 0.20, 1.0)
 @onready var _btn_prune:    Button         = $RootPanel/Margin/VBox/BtnPrune
 @onready var _btn_replant:  Button         = $RootPanel/Margin/VBox/BtnReplant
 @onready var _btn_harvest:  Button         = $RootPanel/Margin/VBox/BtnHarvest
+@onready var _btn_ferment:  Button         = $RootPanel/Margin/VBox/BtnFerment
 
 # ─── State ────────────────────────────────────────────────────────────────────
 var _grid: GridSystem = null
@@ -56,6 +58,7 @@ func _ready() -> void:
 	_btn_prune.pressed.connect(_on_prune_pressed)
 	_btn_replant.pressed.connect(_on_replant_pressed)
 	_btn_harvest.pressed.connect(_on_harvest_pressed)
+	_btn_ferment.pressed.connect(_on_ferment_pressed)
 
 	# Listen for action results to refresh button state.
 	VineyardActionSystem.action_performed.connect(_on_action_performed)
@@ -128,6 +131,9 @@ func _refresh_buttons() -> void:
 		not data.harvested_this_year
 	)
 
+	# Ferment: enabled whenever there are grape lots waiting.
+	_btn_ferment.disabled = HarvestManager.get_lot_count() == 0
+
 	# Status line.
 	if data.is_planted:
 		var harvest_hint: String = "  ★" if data.harvest_ready and not data.harvested_this_year else ""
@@ -145,6 +151,8 @@ func _set_no_selection() -> void:
 	_btn_prune.disabled    = true
 	_btn_replant.disabled  = true
 	_btn_harvest.disabled  = true
+	# Ferment stays enabled/disabled based on lot count, not tile selection.
+	_btn_ferment.disabled  = HarvestManager.get_lot_count() == 0
 
 
 # ─── Private — button handlers ────────────────────────────────────────────────
@@ -195,6 +203,15 @@ func _on_harvest_pressed() -> void:
 		return
 	VineyardActionSystem.harvest(sel.grid_col, sel.grid_row)
 	sel.flash_action(FLASH_HARVEST)
+
+
+func _on_ferment_pressed() -> void:
+	# Ferment does not require a selected tile — uses most recent grape lot.
+	VineyardActionSystem.ferment()
+	# Flash the selected tile if one exists, otherwise no visual feedback needed.
+	var sel: VineyardTile = _get_selected()
+	if sel != null:
+		sel.flash_action(FLASH_FERMENT)
 
 
 func _get_selected() -> VineyardTile:
