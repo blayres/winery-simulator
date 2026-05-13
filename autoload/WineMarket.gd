@@ -66,6 +66,22 @@ func get_money() -> float:
 	return player_money
 
 
+## Returns true if the player can afford [param amount].
+func can_afford(amount: float) -> bool:
+	return player_money >= amount
+
+
+## Deduct [param amount] from player money. Returns false if insufficient.
+## [param reason] is logged to console.
+func spend(amount: float, reason: String = "") -> bool:
+	if player_money < amount:
+		print("Not enough money for '%s' — need €%.0f, have €%.0f" % [reason, amount, player_money])
+		return false
+	player_money -= amount
+	money_changed.emit(player_money, -amount)
+	return true
+
+
 ## Calculate the sale price for a WineBatch without selling it.
 func calculate_price(batch: WineBatch) -> float:
 	# Base price per bottle from quality.

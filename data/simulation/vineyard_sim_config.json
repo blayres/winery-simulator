@@ -28,7 +28,16 @@
     "prune_health_gain":         0.08,
     "prune_productivity_gain":   0.06,
     "replant_starting_health":   0.85,
-    "replant_default_grape":     "pinot_noir"
+    "replant_default_grape":     "pinot_noir",
+    "costs": {
+      "irrigate":     50.0,
+      "drain":        70.0,
+      "treat":       120.0,
+      "prune":        80.0,
+      "replant":     300.0,
+      "harvest":     100.0,
+      "ferment":     200.0
+    }
   },
   "ripeness": {
     "ripening_seasons":          [1, 2],

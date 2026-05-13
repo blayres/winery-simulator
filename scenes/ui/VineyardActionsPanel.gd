@@ -62,6 +62,8 @@ func _ready() -> void:
 
 	# Listen for action results to refresh button state.
 	VineyardActionSystem.action_performed.connect(_on_action_performed)
+	# Refresh when money changes — buttons may become affordable/unaffordable.
+	WineMarket.money_changed.connect(_on_money_changed)
 
 	_set_no_selection()
 
@@ -96,7 +98,10 @@ func _on_tile_unhovered(_tile: VineyardTile) -> void:
 
 
 func _on_action_performed(_action: String, _col: int, _row: int, _result: String) -> void:
-	# Refresh button states after any action (planted state may have changed).
+	_refresh_buttons()
+
+
+func _on_money_changed(_new_amount: float, _delta: float) -> void:
 	_refresh_buttons()
 
 
@@ -115,44 +120,65 @@ func _refresh_buttons() -> void:
 		_set_no_selection()
 		return
 
-	# All buttons enabled when a tile is selected.
-	_btn_irrigate.disabled = false
-	_btn_drain.disabled    = false
-	_btn_replant.disabled  = false
+	var costs: Dictionary = _costs()
+	var money: float      = WineMarket.get_money()
 
-	# Planted-only actions.
-	_btn_treat.disabled = not data.is_planted
-	_btn_prune.disabled = not data.is_planted
+	# Update button text with costs and disable if unaffordable.
+	_btn_irrigate.text     = "Irrigate  €%d" % int(costs.get("irrigate", 50))
+	_btn_drain.text        = "Drain  €%d"    % int(costs.get("drain",    70))
+	_btn_treat.text        = "Treat  €%d"    % int(costs.get("treat",   120))
+	_btn_prune.text        = "Prune  €%d"    % int(costs.get("prune",    80))
+	_btn_replant.text      = "Replant  €%d"  % int(costs.get("replant", 300))
+	_btn_harvest.text      = "Harvest  €%d"  % int(costs.get("harvest", 100))
+	_btn_ferment.text      = "Ferment  €%d"  % int(costs.get("ferment", 200))
 
-	# Harvest: planted, harvest_ready, not already harvested this year.
+	_btn_irrigate.disabled = money < float(costs.get("irrigate", 50))
+	_btn_drain.disabled    = money < float(costs.get("drain",    70))
+	_btn_replant.disabled  = money < float(costs.get("replant", 300))
+
+	_btn_treat.disabled = not data.is_planted or money < float(costs.get("treat", 120))
+	_btn_prune.disabled = not data.is_planted or money < float(costs.get("prune",  80))
+
 	_btn_harvest.disabled = not (
-		data.is_planted and
-		data.harvest_ready and
+		data.is_planted and data.harvest_ready and
 		not data.harvested_this_year
-	)
+	) or money < float(costs.get("harvest", 100))
 
-	# Ferment: enabled whenever there are grape lots waiting.
-	_btn_ferment.disabled = HarvestManager.get_lot_count() == 0
+	_btn_ferment.disabled = HarvestManager.get_lot_count() == 0 or \
+			money < float(costs.get("ferment", 200))
 
-	# Status line.
 	if data.is_planted:
 		var harvest_hint: String = "  ★" if data.harvest_ready and not data.harvested_this_year else ""
-		_lbl_status.text = "(%d,%d)  %s%s" % [sel.grid_col, sel.grid_row,
-				data.lifecycle_stage.capitalize(), harvest_hint]
+		_lbl_status.text = "(%d,%d)  %s%s  €%.0f" % [
+			sel.grid_col, sel.grid_row,
+			data.lifecycle_stage.capitalize(), harvest_hint, money
+		]
 	else:
-		_lbl_status.text = "(%d,%d)  empty" % [sel.grid_col, sel.grid_row]
+		_lbl_status.text = "(%d,%d)  empty  €%.0f" % [sel.grid_col, sel.grid_row, money]
 
 
 func _set_no_selection() -> void:
-	_lbl_status.text       = "No tile selected"
+	var costs: Dictionary = _costs()
+	var money: float      = WineMarket.get_money()
+
+	_lbl_status.text = "No tile selected  €%.0f" % money
+
+	_btn_irrigate.text     = "Irrigate  €%d" % int(costs.get("irrigate", 50))
+	_btn_drain.text        = "Drain  €%d"    % int(costs.get("drain",    70))
+	_btn_treat.text        = "Treat  €%d"    % int(costs.get("treat",   120))
+	_btn_prune.text        = "Prune  €%d"    % int(costs.get("prune",    80))
+	_btn_replant.text      = "Replant  €%d"  % int(costs.get("replant", 300))
+	_btn_harvest.text      = "Harvest  €%d"  % int(costs.get("harvest", 100))
+	_btn_ferment.text      = "Ferment  €%d"  % int(costs.get("ferment", 200))
+
 	_btn_irrigate.disabled = true
 	_btn_drain.disabled    = true
 	_btn_treat.disabled    = true
 	_btn_prune.disabled    = true
 	_btn_replant.disabled  = true
 	_btn_harvest.disabled  = true
-	# Ferment stays enabled/disabled based on lot count, not tile selection.
-	_btn_ferment.disabled  = HarvestManager.get_lot_count() == 0
+	_btn_ferment.disabled  = HarvestManager.get_lot_count() == 0 or \
+			money < float(costs.get("ferment", 200))
 
 
 # ─── Private — button handlers ────────────────────────────────────────────────
@@ -218,3 +244,13 @@ func _get_selected() -> VineyardTile:
 	if _grid == null:
 		return null
 	return _grid.get_selected_tile()
+
+
+## Returns the action costs dictionary from JSON config.
+func _costs() -> Dictionary:
+	var cfg: Dictionary    = DataManager.get_data("vineyard_sim")
+	var raw_pa: Variant    = cfg.get("player_actions", {})
+	if not raw_pa is Dictionary:
+		return {}
+	var raw_costs: Variant = (raw_pa as Dictionary).get("costs", {})
+	return raw_costs if raw_costs is Dictionary else {}

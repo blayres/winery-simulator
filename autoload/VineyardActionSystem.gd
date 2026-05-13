@@ -42,11 +42,15 @@ func irrigate(col: int, row: int) -> String:
 	if data == null:
 		return "No tile at (%d,%d)." % [col, row]
 
+	var cost: float = _action_cost("irrigate")
+	if not WineMarket.spend(cost, "irrigate"):
+		return "Irrigate (%d,%d): not enough money — need €%.0f." % [col, row, cost]
+
 	var cfg: Dictionary  = _action_cfg()
 	var gain: float      = float(cfg.get("irrigate_humidity_gain", 0.18))
 	var before: float    = data.humidity
 	data.humidity        = clampf(data.humidity + gain, 0.0, 1.0)
-	var result: String   = "Irrigate (%d,%d): humidity %.2f → %.2f" % [col, row, before, data.humidity]
+	var result: String   = "Irrigate (%d,%d): humidity %.2f → %.2f  (€%.0f)" % [col, row, before, data.humidity, cost]
 
 	_commit(data, ACTION_IRRIGATE, result)
 	return result
@@ -59,11 +63,15 @@ func drain(col: int, row: int) -> String:
 	if data == null:
 		return "No tile at (%d,%d)." % [col, row]
 
+	var cost: float = _action_cost("drain")
+	if not WineMarket.spend(cost, "drain"):
+		return "Drain (%d,%d): not enough money — need €%.0f." % [col, row, cost]
+
 	var cfg: Dictionary  = _action_cfg()
 	var loss: float      = float(cfg.get("drain_humidity_loss", 0.20))
 	var before: float    = data.humidity
 	data.humidity        = clampf(data.humidity - loss, 0.0, 1.0)
-	var result: String   = "Drain (%d,%d): humidity %.2f → %.2f" % [col, row, before, data.humidity]
+	var result: String   = "Drain (%d,%d): humidity %.2f → %.2f  (€%.0f)" % [col, row, before, data.humidity, cost]
 
 	_commit(data, ACTION_DRAIN, result)
 	return result
@@ -78,11 +86,15 @@ func treat_disease(col: int, row: int) -> String:
 	if not data.is_planted:
 		return "Treat (%d,%d): no vine planted — nothing to treat." % [col, row]
 
+	var cost: float = _action_cost("treat")
+	if not WineMarket.spend(cost, "treat disease"):
+		return "Treat (%d,%d): not enough money — need €%.0f." % [col, row, cost]
+
 	var cfg: Dictionary  = _action_cfg()
 	var reduction: float = float(cfg.get("treat_disease_reduction", 0.25))
 	var before: float    = data.disease_risk
 	data.disease_risk    = clampf(data.disease_risk - reduction, 0.0, 1.0)
-	var result: String   = "Treat (%d,%d): disease %.2f → %.2f" % [col, row, before, data.disease_risk]
+	var result: String   = "Treat (%d,%d): disease %.2f → %.2f  (€%.0f)" % [col, row, before, data.disease_risk, cost]
 
 	_commit(data, ACTION_TREAT, result)
 	return result
@@ -97,6 +109,10 @@ func prune(col: int, row: int) -> String:
 	if not data.is_planted:
 		return "Prune (%d,%d): no vine planted — nothing to prune." % [col, row]
 
+	var cost: float = _action_cost("prune")
+	if not WineMarket.spend(cost, "prune"):
+		return "Prune (%d,%d): not enough money — need €%.0f." % [col, row, cost]
+
 	var cfg: Dictionary    = _action_cfg()
 	var health_gain: float = float(cfg.get("prune_health_gain", 0.08))
 	var prod_gain: float   = float(cfg.get("prune_productivity_gain", 0.06))
@@ -108,8 +124,8 @@ func prune(col: int, row: int) -> String:
 
 	VineyardSimulation.recompute_quality_public(data)
 
-	var result: String = "Prune (%d,%d): health %.2f→%.2f  productivity %.2f→%.2f" % [
-		col, row, before_h, data.vine_health, before_p, data.productivity
+	var result: String = "Prune (%d,%d): health %.2f→%.2f  prod %.2f→%.2f  (€%.0f)" % [
+		col, row, before_h, data.vine_health, before_p, data.productivity, cost
 	]
 
 	_commit(data, ACTION_PRUNE, result)
@@ -123,6 +139,10 @@ func replant(col: int, row: int, grape_id: String = "") -> String:
 	if data == null:
 		return "No tile at (%d,%d)." % [col, row]
 
+	var cost: float = _action_cost("replant")
+	if not WineMarket.spend(cost, "replant"):
+		return "Replant (%d,%d): not enough money — need €%.0f." % [col, row, cost]
+
 	var cfg: Dictionary    = _action_cfg()
 	var start_health: float = float(cfg.get("replant_starting_health", 0.85))
 	var default_grape: String = str(cfg.get("replant_default_grape", "pinot_noir"))
@@ -133,15 +153,15 @@ func replant(col: int, row: int, grape_id: String = "") -> String:
 	data.grape_variety = chosen_grape
 	data.vine_age      = 0
 	data.vine_health   = start_health
-	data.disease_risk  = clampf(data.disease_risk * 0.5, 0.0, 1.0)  # partial reset
+	data.disease_risk  = clampf(data.disease_risk * 0.5, 0.0, 1.0)
 	data.lifecycle_stage = VineLifecycle.STAGE_YOUNG
 	data.productivity    = 0.0
 
 	VineyardSimulation.recompute_quality_public(data)
 
 	var action_desc: String = "Replant" if was_planted else "Plant"
-	var result: String = "%s (%d,%d): %s  health=%.2f" % [
-		action_desc, col, row, chosen_grape, data.vine_health
+	var result: String = "%s (%d,%d): %s  health=%.2f  (€%.0f)" % [
+		action_desc, col, row, chosen_grape, data.vine_health, cost
 	]
 
 	_commit(data, ACTION_REPLANT, result)
@@ -151,6 +171,9 @@ func replant(col: int, row: int, grape_id: String = "") -> String:
 ## Harvest: collects ripe grapes from a tile and creates a GrapeLot.
 ## Requires: planted, harvest_ready, health > 0, productivity > 0, not already harvested.
 func harvest(col: int, row: int) -> String:
+	var cost: float = _action_cost("harvest")
+	if not WineMarket.spend(cost, "harvest"):
+		return "Harvest (%d,%d): not enough money — need €%.0f." % [col, row, cost]
 	var result: String = HarvestManager.harvest(col, row)
 	action_performed.emit(ACTION_HARVEST, col, row, result)
 	return result
@@ -160,6 +183,9 @@ func harvest(col: int, row: int) -> String:
 ## [param method] — "stainless_steel" | "old_oak" | "new_oak"
 ## No tile required — fermentation happens in the cellar.
 func ferment(method: String = "stainless_steel") -> String:
+	var cost: float = _action_cost("ferment")
+	if not WineMarket.spend(cost, "ferment"):
+		return "Ferment: not enough money — need €%.0f." % cost
 	var result: String = FermentationManager.ferment(method)
 	action_performed.emit(ACTION_FERMENT, -1, -1, result)
 	return result
@@ -210,3 +236,12 @@ func _action_cfg() -> Dictionary:
 	var cfg: Dictionary = DataManager.get_data("vineyard_sim")
 	var raw: Variant    = cfg.get("player_actions", {})
 	return raw if raw is Dictionary else {}
+
+
+## Returns the cost for a named action from JSON config.
+func _action_cost(action_key: String) -> float:
+	var cfg: Dictionary   = _action_cfg()
+	var raw_costs: Variant = cfg.get("costs", {})
+	if not raw_costs is Dictionary:
+		return 0.0
+	return float((raw_costs as Dictionary).get(action_key, 0.0))
