@@ -29,6 +29,7 @@ VineyardSimulation="*res://autoload/VineyardSimulation.gd"
 VineyardActionSystem="*res://autoload/VineyardActionSystem.gd"
 HarvestManager="*res://autoload/HarvestManager.gd"
 FermentationManager="*res://autoload/FermentationManager.gd"
+WineMarket="*res://autoload/WineMarket.gd"
 
 [physics]
 

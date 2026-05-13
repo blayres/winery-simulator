@@ -8,7 +8,7 @@ class_name DebugOverlay
 extends CanvasLayer
 
 const PANEL_W: float = 340.0
-const PANEL_H: float = 310.0
+const PANEL_H: float = 340.0
 const MARGIN:  float = 10.0
 
 var _grid:   GridSystem       = null
@@ -26,6 +26,8 @@ var _camera: CameraController = null
 @onready var _lbl_soil:    Label = $Panel/Margin/VBox/SoilLabel
 @onready var _lbl_zoom:    Label = $Panel/Margin/VBox/ZoomLabel
 @onready var _lbl_grid:    Label = $Panel/Margin/VBox/GridLabel
+@onready var _lbl_money:   Label = $Panel/Margin/VBox/MoneyLabel
+@onready var _lbl_batches: Label = $Panel/Margin/VBox/BatchesLabel
 @onready var _lbl_hint:    Label = $Panel/Margin/VBox/HintLabel
 
 func _ready() -> void:
@@ -104,5 +106,11 @@ func _update_labels() -> void:
 		_lbl_zoom.text = "Zoom    %.2f×" % _camera.get_zoom_level()
 	else:
 		_lbl_zoom.text = "Zoom    -"
+
+	_lbl_money.text   = "Money   €%.0f" % WineMarket.get_money()
+	_lbl_batches.text = "Cellar  %d batch%s" % [
+		FermentationManager.get_batch_count(),
+		"es" if FermentationManager.get_batch_count() != 1 else ""
+	]
 
 	_lbl_hint.text = "F1 overlay · F2 inspector · Space week · Shift+Space season · Y auto · I/D/T/P/R actions"

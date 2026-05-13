@@ -7,8 +7,8 @@ layer = 100
 script = ExtResource("1")
 
 [node name="Panel" type="PanelContainer" parent="."]
-position = Vector2(930, 390)
-size = Vector2(340, 310)
+position = Vector2(930, 360)
+size = Vector2(340, 340)
 
 [node name="Margin" type="MarginContainer" parent="Panel"]
 layout_mode = 1
@@ -95,6 +95,18 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.88, 0.75, 1)
 theme_override_font_sizes/font_size = 12
 text = "Grid    -"
+
+[node name="MoneyLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.92, 0.55, 1)
+theme_override_font_sizes/font_size = 12
+text = "Money   €5000"
+
+[node name="BatchesLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.80, 0.70, 0.90, 1)
+theme_override_font_sizes/font_size = 12
+text = "Cellar  0 batches"
 
 [node name="HintLabel" type="Label" parent="Panel/Margin/VBox"]
 layout_mode = 2

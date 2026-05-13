@@ -143,6 +143,15 @@ func get_batch_count() -> int:
 	return _batches.size()
 
 
+## Remove a single batch by id. Used by WineMarket when a batch is sold.
+func remove_batch(batch_id: int) -> void:
+	for i: int in _batches.size():
+		if _batches[i].batch_id == batch_id:
+			_batches.remove_at(i)
+			batches_changed.emit(_batches.size())
+			return
+
+
 # ─── Save / Load interface ────────────────────────────────────────────────────
 
 func get_save_data() -> Dictionary:

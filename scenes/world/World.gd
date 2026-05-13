@@ -149,6 +149,7 @@ func _on_tile_data_changed(data: TileSimData) -> void:
 ## Global hotkeys (no tile required):
 ##   F  → Ferment most recent grape lot (stainless steel)
 ##   C  → Toggle Wine Cellar panel
+##   S  → Sell most recent wine batch
 
 # Flash colors per action — defined here so they're easy to tune.
 const FLASH_IRRIGATE: Color = Color(0.40, 0.70, 1.00, 1.0)   # blue
@@ -228,6 +229,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	# ── Wine Cellar toggle ────────────────────────────────────────────────
 	if k.keycode == KEY_C:
 		_cellar.toggle()
+		get_viewport().set_input_as_handled()
+
+	# ── Sell latest wine batch ────────────────────────────────────────────
+	if k.keycode == KEY_S:
+		var result: String = WineMarket.sell_latest()
+		print("Sell: %s" % result)
 		get_viewport().set_input_as_handled()
 
 
