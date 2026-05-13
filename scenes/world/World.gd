@@ -31,6 +31,7 @@ extends Node2D
 @onready var _debug:     DebugOverlay       = $WorldUI/DebugOverlay
 @onready var _inspector: TileInspectorPanel = $TileInspectorPanel
 @onready var _actions:   VineyardActionsPanel = $VineyardActionsPanel
+@onready var _cellar:    WineCellarPanel    = $WineCellarPanel
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 func _ready() -> void:
@@ -147,6 +148,7 @@ func _on_tile_data_changed(data: TileSimData) -> void:
 ##
 ## Global hotkeys (no tile required):
 ##   F  → Ferment most recent grape lot (stainless steel)
+##   C  → Toggle Wine Cellar panel
 
 # Flash colors per action — defined here so they're easy to tune.
 const FLASH_IRRIGATE: Color = Color(0.40, 0.70, 1.00, 1.0)   # blue
@@ -223,6 +225,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		print("Ferment: %s" % result)
 		get_viewport().set_input_as_handled()
 
+	# ── Wine Cellar toggle ────────────────────────────────────────────────
+	if k.keycode == KEY_C:
+		_cellar.toggle()
+		get_viewport().set_input_as_handled()
+
 
 func _flash_tile(tile: VineyardTile, color: Color) -> void:
 	tile.flash_action(color)
@@ -248,6 +255,9 @@ func _validate_children() -> bool:
 		ok = false
 	if _actions == null:
 		push_error("World: $VineyardActionsPanel is null — VineyardActionsPanel.tscn may have failed to load.")
+		ok = false
+	if _cellar == null:
+		push_error("World: $WineCellarPanel is null — WineCellarPanel.tscn may have failed to load.")
 		ok = false
 	return ok
 
