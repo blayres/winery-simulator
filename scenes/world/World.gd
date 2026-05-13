@@ -164,6 +164,7 @@ func _on_load_failed(slot: int, error: String) -> void:
 ##   Y                → toggle auto-advance  (was T — freed for Treat Disease)
 ##
 ## Vineyard action hotkeys (selected tile only):
+##   B  → Buy Land      (locked tiles only)
 ##   I  → Irrigate      (raise humidity)
 ##   D  → Drain         (lower humidity)
 ##   T  → Treat Disease (reduce disease risk — planted only)
@@ -226,6 +227,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	var row: int = sel.grid_row
 
 	match k.keycode:
+		KEY_B:
+			# Buy land — only works on locked tiles.
+			var result: String = VineyardActionSystem.buy_land(col, row)
+			print("Buy Land: %s" % result)
+			get_viewport().set_input_as_handled()
 		KEY_I:
 			var result: String = VineyardActionSystem.irrigate(col, row)
 			_flash_tile(sel, FLASH_IRRIGATE)

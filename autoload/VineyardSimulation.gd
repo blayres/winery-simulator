@@ -64,6 +64,7 @@ func initialize_grid(cols: int, rows: int) -> void:
 			var data: TileSimData = _create_tile_data(col, row)
 			_tile_data[_key(col, row)] = data
 
+	_assign_starting_ownership(cols, rows)
 	_seed_demo_vines(cols, rows)
 	# Initialize lifecycle stage and productivity for all seeded tiles.
 	_init_lifecycle_for_all()
@@ -123,6 +124,30 @@ func uproot_vine(col: int, row: int) -> void:
 	recompute_quality_public(data)
 	tile_data_changed.emit(data)
 
+
+## Returns the land purchase cost for a tile.
+## Formula: base_cost + quality_potential × quality_range
+## Range: €500 (low quality) – €1500 (high quality).
+func calculate_land_cost(col: int, row: int) -> float:
+	var data: TileSimData = get_tile_data(col, row)
+	if data == null:
+		return 0.0
+	var land_cfg: Dictionary = _get_cfg_section("land")
+	var base: float  = float(land_cfg.get("cost_base",  500.0))
+	var range_: float = float(land_cfg.get("cost_range", 1000.0))
+	return base + data.quality_potential * range_
+
+
+## Purchase a locked tile. Returns true on success, false if already owned or not found.
+## Caller (VineyardActionSystem) is responsible for charging money.
+func buy_land(col: int, row: int) -> bool:
+	var data: TileSimData = get_tile_data(col, row)
+	if data == null or data.is_owned:
+		return false
+	data.is_owned = true
+	tile_data_changed.emit(data)
+	return true
+
 # ─── Save / Load interface ────────────────────────────────────────────────────
 
 ## Serialize all tile sim data for saving.
@@ -142,6 +167,7 @@ func get_save_data() -> Dictionary:
 			"drainage":          d.drainage,
 			"disease_risk":      d.disease_risk,
 			"quality_potential": d.quality_potential,
+			"is_owned":          d.is_owned,
 			"is_planted":        d.is_planted,
 			"grape_variety":     d.grape_variety,
 			"vine_age":          d.vine_age,
@@ -185,6 +211,7 @@ func load_save_data(data: Dictionary) -> void:
 		tile.drainage          = float(d.get("drainage",          tile.drainage))
 		tile.disease_risk      = float(d.get("disease_risk",      tile.disease_risk))
 		tile.quality_potential = float(d.get("quality_potential", tile.quality_potential))
+		tile.is_owned          = bool(d.get("is_owned",           true))
 		tile.is_planted        = bool(d.get("is_planted",         false))
 		tile.grape_variety     = str(d.get("grape_variety",       ""))
 		tile.vine_age          = int(d.get("vine_age",            0))
@@ -478,6 +505,34 @@ func _tick_vine(data: TileSimData) -> void:
 ## data to show immediately. Remove or replace with player actions later.
 func _seed_demo_vines(cols: int, rows: int) -> void:
 	SimDemoSeeder.seed_vines(self, cols, rows)
+
+
+# ─── Private — starting ownership ────────────────────────────────────────────
+## Marks the central region as owned and outer tiles as locked.
+## The owned region is a rectangle inset by OWNERSHIP_BORDER tiles on each side.
+## All demo-seeded vines are guaranteed to be in the owned region.
+const OWNERSHIP_BORDER: int = 3   # tiles locked on each edge
+
+func _assign_starting_ownership(cols: int, rows: int) -> void:
+	var owned_count: int  = 0
+	var locked_count: int = 0
+	for key: String in _tile_data:
+		var raw: Variant = _tile_data[key]
+		if not raw is TileSimData:
+			continue
+		var tile: TileSimData = raw
+		var in_owned_region: bool = (
+			tile.grid_col >= OWNERSHIP_BORDER and
+			tile.grid_col < cols - OWNERSHIP_BORDER and
+			tile.grid_row >= OWNERSHIP_BORDER and
+			tile.grid_row < rows - OWNERSHIP_BORDER
+		)
+		tile.is_owned = in_owned_region
+		if in_owned_region:
+			owned_count += 1
+		else:
+			locked_count += 1
+	print("VineyardSimulation: ownership set — %d owned, %d locked." % [owned_count, locked_count])
 
 
 ## Sets lifecycle_stage and productivity on all tiles after seeding.

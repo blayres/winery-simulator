@@ -19,7 +19,7 @@ extends CanvasLayer
 
 # ─── Panel geometry ───────────────────────────────────────────────────────────
 const PANEL_W: float = 160.0
-const PANEL_H: float = 340.0
+const PANEL_H: float = 380.0   # taller to fit Buy Land button
 const MARGIN:  float = 10.0
 
 # ─── Flash colors (match World.gd) ───────────────────────────────────────────
@@ -30,11 +30,13 @@ const FLASH_PRUNE:    Color = Color(0.90, 0.90, 0.40, 1.0)
 const FLASH_REPLANT:  Color = Color(0.55, 1.00, 0.55, 1.0)
 const FLASH_HARVEST:  Color = Color(1.00, 0.85, 0.20, 1.0)
 const FLASH_FERMENT:  Color = Color(0.80, 0.40, 0.90, 1.0)
+const FLASH_BUY_LAND: Color = Color(1.00, 0.90, 0.30, 1.0)   # gold
 
 # ─── Child nodes ──────────────────────────────────────────────────────────────
 @onready var _root_panel:   PanelContainer = $RootPanel
 @onready var _lbl_title:    Label          = $RootPanel/Margin/VBox/Title
 @onready var _lbl_status:   Label          = $RootPanel/Margin/VBox/StatusLabel
+@onready var _btn_buy_land: Button         = $RootPanel/Margin/VBox/BtnBuyLand
 @onready var _btn_irrigate: Button         = $RootPanel/Margin/VBox/BtnIrrigate
 @onready var _btn_drain:    Button         = $RootPanel/Margin/VBox/BtnDrain
 @onready var _btn_treat:    Button         = $RootPanel/Margin/VBox/BtnTreat
@@ -52,6 +54,7 @@ func _ready() -> void:
 	_place_panel.call_deferred()
 
 	# Wire button signals.
+	_btn_buy_land.pressed.connect(_on_buy_land_pressed)
 	_btn_irrigate.pressed.connect(_on_irrigate_pressed)
 	_btn_drain.pressed.connect(_on_drain_pressed)
 	_btn_treat.pressed.connect(_on_treat_pressed)
@@ -123,14 +126,40 @@ func _refresh_buttons() -> void:
 	var costs: Dictionary = _costs()
 	var money: float      = WineMarket.get_money()
 
+	# ── Locked tile: show only Buy Land ──────────────────────────────────
+	if not data.is_owned:
+		var land_cost: float = VineyardSimulation.calculate_land_cost(sel.grid_col, sel.grid_row)
+		_lbl_status.text = "(%d,%d)  Locked  €%.0f" % [sel.grid_col, sel.grid_row, money]
+		_btn_buy_land.text     = "Buy Land  €%.0f" % land_cost
+		_btn_buy_land.disabled = money < land_cost
+		_btn_buy_land.visible  = true
+		_btn_irrigate.visible  = false
+		_btn_drain.visible     = false
+		_btn_treat.visible     = false
+		_btn_prune.visible     = false
+		_btn_replant.visible   = false
+		_btn_harvest.visible   = false
+		_btn_ferment.visible   = false
+		return
+
+	# ── Owned tile: show all management actions ───────────────────────────
+	_btn_buy_land.visible  = false
+	_btn_irrigate.visible  = true
+	_btn_drain.visible     = true
+	_btn_treat.visible     = true
+	_btn_prune.visible     = true
+	_btn_replant.visible   = true
+	_btn_harvest.visible   = true
+	_btn_ferment.visible   = true
+
 	# Update button text with costs and disable if unaffordable.
 	_btn_irrigate.text     = "Irrigate  €%d" % int(costs.get("irrigate", 50))
 	_btn_drain.text        = "Drain  €%d"    % int(costs.get("drain",    70))
 	_btn_treat.text        = "Treat  €%d"    % int(costs.get("treat",   120))
 	_btn_prune.text        = "Prune  €%d"    % int(costs.get("prune",    80))
 	_btn_replant.text      = "Replant  €%d"  % int(costs.get("replant", 300))
-	_btn_harvest.text      = "Harvest  €%d"  % int(costs.get("harvest", 100))
-	_btn_ferment.text      = "Ferment  €%d"  % int(costs.get("ferment", 200))
+	_btn_harvest.text      = "Harvest  €%d"  % int(costs.get("harvest",  50))
+	_btn_ferment.text      = "Ferment  €%d"  % int(costs.get("ferment", 100))
 
 	_btn_irrigate.disabled = money < float(costs.get("irrigate", 50))
 	_btn_drain.disabled    = money < float(costs.get("drain",    70))
@@ -142,10 +171,10 @@ func _refresh_buttons() -> void:
 	_btn_harvest.disabled = not (
 		data.is_planted and data.harvest_ready and
 		not data.harvested_this_year
-	) or money < float(costs.get("harvest", 100))
+	) or money < float(costs.get("harvest", 50))
 
 	_btn_ferment.disabled = HarvestManager.get_lot_count() == 0 or \
-			money < float(costs.get("ferment", 200))
+			money < float(costs.get("ferment", 100))
 
 	if data.is_planted:
 		var harvest_hint: String = "  ★" if data.harvest_ready and not data.harvested_this_year else ""
@@ -163,13 +192,22 @@ func _set_no_selection() -> void:
 
 	_lbl_status.text = "No tile selected  €%.0f" % money
 
+	_btn_buy_land.visible  = false
+	_btn_irrigate.visible  = true
+	_btn_drain.visible     = true
+	_btn_treat.visible     = true
+	_btn_prune.visible     = true
+	_btn_replant.visible   = true
+	_btn_harvest.visible   = true
+	_btn_ferment.visible   = true
+
 	_btn_irrigate.text     = "Irrigate  €%d" % int(costs.get("irrigate", 50))
 	_btn_drain.text        = "Drain  €%d"    % int(costs.get("drain",    70))
 	_btn_treat.text        = "Treat  €%d"    % int(costs.get("treat",   120))
 	_btn_prune.text        = "Prune  €%d"    % int(costs.get("prune",    80))
 	_btn_replant.text      = "Replant  €%d"  % int(costs.get("replant", 300))
-	_btn_harvest.text      = "Harvest  €%d"  % int(costs.get("harvest", 100))
-	_btn_ferment.text      = "Ferment  €%d"  % int(costs.get("ferment", 200))
+	_btn_harvest.text      = "Harvest  €%d"  % int(costs.get("harvest",  50))
+	_btn_ferment.text      = "Ferment  €%d"  % int(costs.get("ferment", 100))
 
 	_btn_irrigate.disabled = true
 	_btn_drain.disabled    = true
@@ -178,10 +216,18 @@ func _set_no_selection() -> void:
 	_btn_replant.disabled  = true
 	_btn_harvest.disabled  = true
 	_btn_ferment.disabled  = HarvestManager.get_lot_count() == 0 or \
-			money < float(costs.get("ferment", 200))
+			money < float(costs.get("ferment", 100))
 
 
 # ─── Private — button handlers ────────────────────────────────────────────────
+
+func _on_buy_land_pressed() -> void:
+	var sel: VineyardTile = _get_selected()
+	if sel == null:
+		return
+	VineyardActionSystem.buy_land(sel.grid_col, sel.grid_row)
+	sel.flash_action(FLASH_BUY_LAND)
+
 
 func _on_irrigate_pressed() -> void:
 	var sel: VineyardTile = _get_selected()

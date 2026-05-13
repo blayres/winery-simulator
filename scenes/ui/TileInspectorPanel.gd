@@ -117,6 +117,25 @@ func _refresh() -> void:
 	_lbl_drainage.text  = "Drainage    %s" % _bar(d.drainage)
 	_lbl_potential.text = "Potential   %s" % _bar(d.quality_potential)
 
+	# ── Locked tile — show minimal info and buy prompt ────────────────────
+	if not d.is_owned:
+		var cost: float = VineyardSimulation.calculate_land_cost(d.grid_col, d.grid_row)
+		_lbl_planted.text   = "Locked land"
+		_lbl_grape.text     = "Buy cost    €%.0f" % cost
+		_lbl_age.text       = "Press B to buy"
+		_lbl_lifecycle.text = "—"
+		_lbl_health.text    = "—"
+		_lbl_disease.text   = "—"
+		_lbl_quality.text   = "—"
+		_lbl_prod.text      = "—"
+		_lbl_ripeness.text  = "—"
+		_lbl_sugar.text     = "—"
+		_lbl_acidity.text   = "—"
+		_lbl_harvest.text   = "—"
+		_lbl_harvested.text = "—"
+		_lbl_hint.text      = "F2  show / hide"
+		return
+
 	if d.is_planted:
 		var grape: String = d.grape_variety if d.grape_variety != "" else "unknown"
 		_lbl_planted.text   = "Planted     yes"

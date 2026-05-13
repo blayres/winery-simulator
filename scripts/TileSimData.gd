@@ -90,10 +90,20 @@ extends Resource
 ## Prevents double-harvesting. Reset to false at year transition.
 @export var harvested_this_year: bool = false
 
+# ─── Ownership ────────────────────────────────────────────────────────────────
+## Whether the player owns this tile.
+## Locked tiles (is_owned = false) cannot be planted, managed, or harvested.
+## Ownership is purchased via VineyardActionSystem.buy_land().
+@export var is_owned: bool = true
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 ## Returns a human-readable summary string for debug display.
 func summary() -> String:
+	if not is_owned:
+		return "[%d,%d] LOCKED  soil=%s  quality_potential=%.2f" % [
+			grid_col, grid_row, soil_type, quality_potential
+		]
 	var planted_str: String = grape_variety if is_planted else "empty"
 	var ripe_str: String = "  ripe=%.2f sug=%.2f acid=%.2f%s" % [
 		ripeness, sugar_level, acidity_level,

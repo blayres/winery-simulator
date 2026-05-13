@@ -78,6 +78,10 @@
       "climate_weight":  0.25
     }
   },
+  "land": {
+    "cost_base":  500.0,
+    "cost_range": 1000.0
+  },
   "climate_effects": {
     "humidity": {
       "rainfall_gain_rate":    0.0015,

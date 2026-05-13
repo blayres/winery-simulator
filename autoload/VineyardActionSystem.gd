@@ -32,6 +32,7 @@ const ACTION_PRUNE:    String = "prune"
 const ACTION_REPLANT:  String = "replant"
 const ACTION_HARVEST:  String = "harvest"
 const ACTION_FERMENT:  String = "ferment"
+const ACTION_BUY_LAND: String = "buy_land"
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -41,6 +42,8 @@ func irrigate(col: int, row: int) -> String:
 	var data: TileSimData = VineyardSimulation.get_tile_data(col, row)
 	if data == null:
 		return "No tile at (%d,%d)." % [col, row]
+	if not data.is_owned:
+		return "Irrigate (%d,%d): tile is locked — buy land first." % [col, row]
 
 	var cost: float = _action_cost("irrigate")
 	if not WineMarket.spend(cost, "irrigate"):
@@ -62,6 +65,8 @@ func drain(col: int, row: int) -> String:
 	var data: TileSimData = VineyardSimulation.get_tile_data(col, row)
 	if data == null:
 		return "No tile at (%d,%d)." % [col, row]
+	if not data.is_owned:
+		return "Drain (%d,%d): tile is locked — buy land first." % [col, row]
 
 	var cost: float = _action_cost("drain")
 	if not WineMarket.spend(cost, "drain"):
@@ -83,6 +88,8 @@ func treat_disease(col: int, row: int) -> String:
 	var data: TileSimData = VineyardSimulation.get_tile_data(col, row)
 	if data == null:
 		return "No tile at (%d,%d)." % [col, row]
+	if not data.is_owned:
+		return "Treat (%d,%d): tile is locked — buy land first." % [col, row]
 	if not data.is_planted:
 		return "Treat (%d,%d): no vine planted — nothing to treat." % [col, row]
 
@@ -106,6 +113,8 @@ func prune(col: int, row: int) -> String:
 	var data: TileSimData = VineyardSimulation.get_tile_data(col, row)
 	if data == null:
 		return "No tile at (%d,%d)." % [col, row]
+	if not data.is_owned:
+		return "Prune (%d,%d): tile is locked — buy land first." % [col, row]
 	if not data.is_planted:
 		return "Prune (%d,%d): no vine planted — nothing to prune." % [col, row]
 
@@ -138,6 +147,8 @@ func replant(col: int, row: int, grape_id: String = "") -> String:
 	var data: TileSimData = VineyardSimulation.get_tile_data(col, row)
 	if data == null:
 		return "No tile at (%d,%d)." % [col, row]
+	if not data.is_owned:
+		return "Replant (%d,%d): tile is locked — buy land first." % [col, row]
 
 	var cost: float = _action_cost("replant")
 	if not WineMarket.spend(cost, "replant"):
@@ -169,8 +180,11 @@ func replant(col: int, row: int, grape_id: String = "") -> String:
 
 
 ## Harvest: collects ripe grapes from a tile and creates a GrapeLot.
-## Requires: planted, harvest_ready, health > 0, productivity > 0, not already harvested.
+## Requires: owned, planted, harvest_ready, health > 0, productivity > 0, not already harvested.
 func harvest(col: int, row: int) -> String:
+	var data: TileSimData = VineyardSimulation.get_tile_data(col, row)
+	if data != null and not data.is_owned:
+		return "Harvest (%d,%d): tile is locked — buy land first." % [col, row]
 	var cost: float = _action_cost("harvest")
 	if not WineMarket.spend(cost, "harvest"):
 		return "Harvest (%d,%d): not enough money — need €%.0f." % [col, row, cost]
@@ -188,6 +202,31 @@ func ferment(method: String = "stainless_steel") -> String:
 		return "Ferment: not enough money — need €%.0f." % cost
 	var result: String = FermentationManager.ferment(method)
 	action_performed.emit(ACTION_FERMENT, -1, -1, result)
+	return result
+
+
+## Buy Land: purchase a locked tile.
+## Cost is based on the tile's quality_potential (€500–€1500).
+func buy_land(col: int, row: int) -> String:
+	var data: TileSimData = VineyardSimulation.get_tile_data(col, row)
+	if data == null:
+		return "Buy Land (%d,%d): no tile found." % [col, row]
+	if data.is_owned:
+		return "Buy Land (%d,%d): tile already owned." % [col, row]
+
+	var cost: float = VineyardSimulation.calculate_land_cost(col, row)
+	if not WineMarket.spend(cost, "buy land"):
+		return "Buy Land (%d,%d): not enough money — need €%.0f, have €%.0f." % [
+			col, row, cost, WineMarket.get_money()
+		]
+
+	VineyardSimulation.buy_land(col, row)
+
+	var result: String = "Bought tile (%d,%d) for €%.0f.  Money: €%.0f" % [
+		col, row, cost, WineMarket.get_money()
+	]
+	print(result)
+	action_performed.emit(ACTION_BUY_LAND, col, row, result)
 	return result
 
 

@@ -36,7 +36,7 @@ static func seed_vines(sim: Node, cols: int, rows: int) -> void:
 
 			# Call public API — SimDemoSeeder never accesses private members.
 			var data: TileSimData = sim.get_tile_data(col, row)
-			if data == null or data.is_planted:
+			if data == null or data.is_planted or not data.is_owned:
 				continue
 
 			data.is_planted    = true

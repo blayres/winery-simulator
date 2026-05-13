@@ -49,6 +49,11 @@ const OUTLINE_PLANTED:     Color = Color("1a3a28")
 const OUTLINE_SICK:        Color = Color("7a6020")
 const OUTLINE_HARVEST:     Color = Color("c8a020")   # golden — harvest ready
 
+# ─── Locked tile color ────────────────────────────────────────────────────────
+## Locked tiles are desaturated and darkened to signal they are unavailable.
+const LOCKED_COLOR:   Color = Color("3a3a3a")
+const LOCKED_OUTLINE: Color = Color("252525")
+
 # ─── Public API ───────────────────────────────────────────────────────────────
 
 ## Computes the base polygon color for a tile given its sim data.
@@ -56,6 +61,13 @@ const OUTLINE_HARVEST:     Color = Color("c8a020")   # golden — harvest ready
 static func compute_base_color(data: TileSimData, checkerboard: bool) -> Color:
 	if data == null:
 		return SOIL_COLOR_DEFAULT
+
+	# Locked tiles: dark, desaturated, clearly unavailable.
+	if not data.is_owned:
+		var locked: Color = LOCKED_COLOR
+		if checkerboard:
+			locked = locked.darkened(0.05)
+		return locked
 
 	# Start from soil color.
 	var base: Color = SOIL_COLORS.get(data.soil_type, SOIL_COLOR_DEFAULT)
@@ -99,6 +111,8 @@ static func compute_base_color(data: TileSimData, checkerboard: bool) -> Color:
 static func compute_outline_color(data: TileSimData) -> Color:
 	if data == null:
 		return OUTLINE_EMPTY
+	if not data.is_owned:
+		return LOCKED_OUTLINE
 	if data.is_planted and data.harvest_ready:
 		return OUTLINE_HARVEST
 	if data.is_planted and data.vine_health < 0.35:
@@ -112,6 +126,8 @@ static func compute_outline_color(data: TileSimData) -> Color:
 static func tile_label(data: TileSimData) -> String:
 	if data == null:
 		return "?"
+	if not data.is_owned:
+		return "🔒"
 	if not data.is_planted:
 		return data.soil_type.substr(0, 2).to_upper()
 	return data.grape_variety.substr(0, 2).to_upper() if data.grape_variety != "" else "V"
