@@ -33,9 +33,10 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_place_panel)
 	_place_panel.call_deferred()
 
-	# Listen for new batches — refresh automatically.
+	# Listen for new batches and aging ticks — refresh automatically.
 	FermentationManager.batches_changed.connect(_on_batches_changed)
 	FermentationManager.fermentation_completed.connect(_on_fermentation_completed)
+	FermentationManager.aging_tick_completed.connect(_on_aging_tick)
 
 	_root_panel.visible = false
 	_refresh()
@@ -79,6 +80,11 @@ func _on_fermentation_completed(_batch: WineBatch) -> void:
 		_refresh()
 
 
+func _on_aging_tick() -> void:
+	if _root_panel.visible:
+		_refresh()
+
+
 # ─── Private — display ────────────────────────────────────────────────────────
 
 func _refresh() -> void:
@@ -105,6 +111,12 @@ func _refresh() -> void:
 		lines.append("[color=#c8a840]── Batch #%d ──[/color]" % b.batch_id)
 		lines.append("[color=%s]%s  (%s)[/color]" % [tier_color, b.wine_name, b.quality_label()])
 		lines.append("  Year %d  ·  %s" % [b.vintage_year, b.method_label()])
+		lines.append("  Age       %dy  ·  [color=%s]%s[/color]  (pot. %.0f%%)" % [
+			b.age_years,
+			_stage_color(b.maturity_stage),
+			b.maturity_label(),
+			b.aging_potential * 100.0
+		])
 		lines.append("  Quality   [color=%s]%.0f%%[/color]" % [tier_color, b.wine_quality * 100.0])
 		lines.append("  Alcohol   %.1f%% ABV" % abv)
 		lines.append("  Freshness %.0f%%  Body %.0f%%" % [b.freshness * 100.0, b.body * 100.0])
@@ -126,6 +138,15 @@ func _quality_color(quality: float) -> String:
 		return "#c0c0c0"   # silver — average
 	else:
 		return "#c06060"   # red — poor
+
+
+func _stage_color(stage: String) -> String:
+	match stage:
+		"young":      return "#88aaff"   # blue — fresh
+		"developing": return "#88ddaa"   # teal — growing
+		"peak":       return "#f0d060"   # gold — best
+		"declining":  return "#cc8866"   # amber — fading
+	return "#aaaaaa"
 
 
 # ─── Input ────────────────────────────────────────────────────────────────────

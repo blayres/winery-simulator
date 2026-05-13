@@ -1,28 +1,20 @@
 ## FermentationManager.gd
-## Singleton — fermentation pipeline and wine batch inventory.
+## Singleton — fermentation pipeline, wine batch inventory, and aging.
 ##
 ## Responsibility:
 ##   - Receives a GrapeLot and a fermentation method.
 ##   - Calculates wine profile from grape data + method modifiers.
 ##   - Creates a WineBatch Resource and stores it in memory.
 ##   - Removes the consumed GrapeLot from HarvestManager.
-##   - Emits fermentation_completed for future UI/economy systems.
-##
-## Fermentation methods:
-##   stainless_steel — preserves freshness and fruit; no oak; clean style
-##   old_oak         — adds subtle complexity and soft oak; balanced
-##   new_oak         — adds strong oak, tannin, and prestige character
-##
-## Architecture:
-##   FermentationManager is the ONLY creator of WineBatch instances.
-##   VineyardActionSystem calls ferment() — never creates batches directly.
-##   Future aging/bottling systems will consume batches from get_all_batches().
+##   - Ages all WineBatch objects each year via WineAgingProcessor.
+##   - Emits fermentation_completed and batches_changed for UI/economy systems.
 
 extends Node
 
 # ─── Signals ──────────────────────────────────────────────────────────────────
 signal fermentation_completed(batch: WineBatch)
 signal batches_changed(total_batches: int)
+signal aging_tick_completed()
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 const METHOD_STAINLESS: String = "stainless_steel"
@@ -58,6 +50,11 @@ const METHOD_MODIFIERS: Dictionary = {
 # ─── State ────────────────────────────────────────────────────────────────────
 var _batches:  Array[WineBatch] = []
 var _next_id:  int              = 1
+
+# ─── Lifecycle ────────────────────────────────────────────────────────────────
+func _ready() -> void:
+	TimeManager.year_changed.connect(_on_year_changed)
+
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -168,6 +165,9 @@ func get_save_data() -> Dictionary:
 			"oak_influence":       b.oak_influence,
 			"wine_quality":        b.wine_quality,
 			"bottles_estimated":   b.bottles_estimated,
+			"age_years":           b.age_years,
+			"aging_potential":     b.aging_potential,
+			"maturity_stage":      b.maturity_stage,
 		})
 	return { "batches": serialized, "next_id": _next_id }
 
@@ -200,6 +200,9 @@ func load_save_data(data: Dictionary) -> void:
 		b.oak_influence       = float(d.get("oak_influence", 0.0))
 		b.wine_quality        = float(d.get("wine_quality", 0.0))
 		b.bottles_estimated   = int(d.get("bottles_estimated", 0))
+		b.age_years           = int(d.get("age_years",       0))
+		b.aging_potential     = float(d.get("aging_potential", 0.0))
+		b.maturity_stage      = str(d.get("maturity_stage",  "young"))
 		_batches.append(b)
 	batches_changed.emit(_batches.size())
 
@@ -260,9 +263,40 @@ func _create_batch(lot: GrapeLot, method: String) -> WineBatch:
 	b.bottles_estimated = int(400.0 * lot.productivity * bottles_mult)
 	b.bottles_estimated = maxi(b.bottles_estimated, 12)   # minimum 12 bottles
 
+	# ── Aging potential — computed last (needs all other fields set) ──────
+	WineAgingProcessor.compute_aging_potential(b)
+
 	return b
 
 
 ## Remove a consumed lot from HarvestManager's inventory.
 func _consume_lot(lot: GrapeLot) -> void:
 	HarvestManager.remove_lot(lot.lot_id)
+
+
+# ─── Private — yearly aging ───────────────────────────────────────────────────
+
+func _on_year_changed(_year: int) -> void:
+	if _batches.is_empty():
+		return
+
+	var counts: Dictionary = {
+		"young": 0, "developing": 0, "peak": 0, "declining": 0
+	}
+
+	for i: int in _batches.size():
+		var b: WineBatch = _batches[i]
+		WineAgingProcessor.tick_year(b)
+		var stage: String = b.maturity_stage
+		if counts.has(stage):
+			counts[stage] = int(counts[stage]) + 1
+
+	batches_changed.emit(_batches.size())
+	aging_tick_completed.emit()
+
+	print("Wine Aging: %d batch%s aged.  %d young, %d developing, %d peak, %d declining" % [
+		_batches.size(),
+		"es" if _batches.size() != 1 else "",
+		int(counts["young"]), int(counts["developing"]),
+		int(counts["peak"]),  int(counts["declining"])
+	])

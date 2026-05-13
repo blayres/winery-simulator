@@ -48,20 +48,41 @@ extends Resource
 ## Estimated number of 750ml bottles from this batch
 @export var bottles_estimated: int = 0
 
+# ─── Aging ────────────────────────────────────────────────────────────────────
+## Years since fermentation. Incremented by WineAgingProcessor each year.
+@export var age_years: int = 0
+
+## 0.0–1.0  how long this wine can age before declining.
+## Computed at creation from acidity, complexity, quality, and method.
+@export var aging_potential: float = 0.0
+
+## Current maturity stage: "young" | "developing" | "peak" | "declining"
+@export var maturity_stage: String = "young"
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 ## One-line summary for console logging.
 func summary() -> String:
-	var abv: float = 8.0 + alcohol_potential * 8.0   # maps 0–1 to 8–16% ABV
+	var abv: float = 8.0 + alcohol_potential * 8.0
 	return (
-		"WineBatch #%d  %s  Year %d  Method: %s\n" +
+		"WineBatch #%d  %s  Year %d  Age %dy  Stage: %s  Method: %s\n" +
 		"  Quality: %.2f  Alcohol: %.1f%%  Freshness: %.2f  Body: %.2f  Complexity: %.2f  Oak: %.2f\n" +
-		"  Bottles: %d"
+		"  Aging Potential: %.2f  Bottles: %d"
 	) % [
-		batch_id, wine_name, vintage_year, fermentation_method,
-		wine_quality, abv, freshness, body, complexity, oak_influence,
-		bottles_estimated
+		batch_id, wine_name, vintage_year, age_years, maturity_stage.capitalize(),
+		fermentation_method, wine_quality, abv, freshness, body, complexity,
+		oak_influence, aging_potential, bottles_estimated
 	]
+
+
+## Maturity stage display label.
+func maturity_label() -> String:
+	match maturity_stage:
+		"young":      return "Young"
+		"developing": return "Developing"
+		"peak":       return "Peak"
+		"declining":  return "Declining"
+	return maturity_stage.capitalize()
 
 
 ## Quality tier label.
