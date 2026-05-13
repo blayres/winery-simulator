@@ -30,6 +30,7 @@ const ACTION_DRAIN:    String = "drain"
 const ACTION_TREAT:    String = "treat_disease"
 const ACTION_PRUNE:    String = "prune"
 const ACTION_REPLANT:  String = "replant"
+const ACTION_HARVEST:  String = "harvest"
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -143,6 +144,47 @@ func replant(col: int, row: int, grape_id: String = "") -> String:
 	]
 
 	_commit(data, ACTION_REPLANT, result)
+	return result
+
+
+## Harvest: collects ripe grapes from a tile and creates a GrapeLot.
+## Requires: planted, harvest_ready, health > 0, productivity > 0, not already harvested.
+func harvest(col: int, row: int) -> String:
+	var result: String = HarvestManager.harvest(col, row)
+	# HarvestManager handles its own commit/signal — just emit action_performed.
+	action_performed.emit(ACTION_HARVEST, col, row, result)
+	return result
+
+
+## DEV ONLY — Force a planted tile into harvest-ready state for testing.
+## Sets ripeness=0.90, sugar=0.75, acidity=0.45, harvest_ready=true.
+## Remove or gate behind a debug flag before shipping.
+func debug_force_harvest_ready(col: int, row: int) -> String:
+	var data: TileSimData = VineyardSimulation.get_tile_data(col, row)
+	if data == null:
+		return "No tile at (%d,%d)." % [col, row]
+	if not data.is_planted:
+		return "Force-ready (%d,%d): no vine planted — replant first." % [col, row]
+
+	data.ripeness            = 0.90
+	data.sugar_level         = 0.75
+	data.acidity_level       = 0.45
+	data.harvest_ready       = true
+	data.harvested_this_year = false
+	# Ensure lifecycle is mature so harvest validation passes.
+	if data.lifecycle_stage == "young" or data.lifecycle_stage == "empty":
+		data.lifecycle_stage = "mature"
+	# Ensure health and productivity are non-zero.
+	if data.vine_health <= 0.0:
+		data.vine_health = 0.80
+	if data.productivity <= 0.0:
+		data.productivity = 0.70
+
+	VineyardSimulation.tile_data_changed.emit(data)
+	action_performed.emit("debug_force_harvest_ready", col, row, "")
+
+	var result: String = "Forced harvest-ready state at (%d,%d)  ripeness=0.90  sugar=0.75  acidity=0.45" % [col, row]
+	print(result)
 	return result
 
 

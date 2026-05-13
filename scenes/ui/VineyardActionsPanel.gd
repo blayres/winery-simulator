@@ -19,7 +19,7 @@ extends CanvasLayer
 
 # ─── Panel geometry ───────────────────────────────────────────────────────────
 const PANEL_W: float = 160.0
-const PANEL_H: float = 260.0
+const PANEL_H: float = 300.0
 const MARGIN:  float = 10.0
 
 # ─── Flash colors (match World.gd) ───────────────────────────────────────────
@@ -28,6 +28,7 @@ const FLASH_DRAIN:    Color = Color(0.85, 0.75, 0.40, 1.0)
 const FLASH_TREAT:    Color = Color(0.40, 1.00, 0.55, 1.0)
 const FLASH_PRUNE:    Color = Color(0.90, 0.90, 0.40, 1.0)
 const FLASH_REPLANT:  Color = Color(0.55, 1.00, 0.55, 1.0)
+const FLASH_HARVEST:  Color = Color(1.00, 0.85, 0.20, 1.0)
 
 # ─── Child nodes ──────────────────────────────────────────────────────────────
 @onready var _root_panel:   PanelContainer = $RootPanel
@@ -38,6 +39,7 @@ const FLASH_REPLANT:  Color = Color(0.55, 1.00, 0.55, 1.0)
 @onready var _btn_treat:    Button         = $RootPanel/Margin/VBox/BtnTreat
 @onready var _btn_prune:    Button         = $RootPanel/Margin/VBox/BtnPrune
 @onready var _btn_replant:  Button         = $RootPanel/Margin/VBox/BtnReplant
+@onready var _btn_harvest:  Button         = $RootPanel/Margin/VBox/BtnHarvest
 
 # ─── State ────────────────────────────────────────────────────────────────────
 var _grid: GridSystem = null
@@ -53,6 +55,7 @@ func _ready() -> void:
 	_btn_treat.pressed.connect(_on_treat_pressed)
 	_btn_prune.pressed.connect(_on_prune_pressed)
 	_btn_replant.pressed.connect(_on_replant_pressed)
+	_btn_harvest.pressed.connect(_on_harvest_pressed)
 
 	# Listen for action results to refresh button state.
 	VineyardActionSystem.action_performed.connect(_on_action_performed)
@@ -118,10 +121,18 @@ func _refresh_buttons() -> void:
 	_btn_treat.disabled = not data.is_planted
 	_btn_prune.disabled = not data.is_planted
 
+	# Harvest: planted, harvest_ready, not already harvested this year.
+	_btn_harvest.disabled = not (
+		data.is_planted and
+		data.harvest_ready and
+		not data.harvested_this_year
+	)
+
 	# Status line.
 	if data.is_planted:
-		_lbl_status.text = "(%d,%d)  %s" % [sel.grid_col, sel.grid_row,
-				data.lifecycle_stage.capitalize()]
+		var harvest_hint: String = "  ★" if data.harvest_ready and not data.harvested_this_year else ""
+		_lbl_status.text = "(%d,%d)  %s%s" % [sel.grid_col, sel.grid_row,
+				data.lifecycle_stage.capitalize(), harvest_hint]
 	else:
 		_lbl_status.text = "(%d,%d)  empty" % [sel.grid_col, sel.grid_row]
 
@@ -133,6 +144,7 @@ func _set_no_selection() -> void:
 	_btn_treat.disabled    = true
 	_btn_prune.disabled    = true
 	_btn_replant.disabled  = true
+	_btn_harvest.disabled  = true
 
 
 # ─── Private — button handlers ────────────────────────────────────────────────
@@ -175,6 +187,14 @@ func _on_replant_pressed() -> void:
 		return
 	VineyardActionSystem.replant(sel.grid_col, sel.grid_row)
 	sel.flash_action(FLASH_REPLANT)
+
+
+func _on_harvest_pressed() -> void:
+	var sel: VineyardTile = _get_selected()
+	if sel == null:
+		return
+	VineyardActionSystem.harvest(sel.grid_col, sel.grid_row)
+	sel.flash_action(FLASH_HARVEST)
 
 
 func _get_selected() -> VineyardTile:

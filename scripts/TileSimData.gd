@@ -86,6 +86,10 @@ extends Resource
 ## True when ripeness ≥ harvest_ready_threshold and vine is mature/old.
 @export var harvest_ready: bool = false
 
+## True once this tile has been harvested in the current year.
+## Prevents double-harvesting. Reset to false at year transition.
+@export var harvested_this_year: bool = false
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 ## Returns a human-readable summary string for debug display.

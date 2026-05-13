@@ -7,8 +7,8 @@ layer = 85
 script = ExtResource("1")
 
 [node name="RootPanel" type="PanelContainer" parent="."]
-position = Vector2(10, 460)
-size = Vector2(160, 260)
+position = Vector2(10, 420)
+size = Vector2(160, 300)
 
 [node name="Margin" type="MarginContainer" parent="RootPanel"]
 layout_mode = 1
@@ -66,3 +66,10 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 11
 disabled = true
 text = "Replant  [R]"
+
+[node name="BtnHarvest" type="Button" parent="RootPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1.0, 0.88, 0.30, 1)
+theme_override_font_sizes/font_size = 11
+disabled = true
+text = "Harvest  [H]"

@@ -20,7 +20,7 @@ extends CanvasLayer
 
 # ─── Panel geometry ───────────────────────────────────────────────────────────
 const PANEL_W: float = 300.0
-const PANEL_H: float = 640.0
+const PANEL_H: float = 680.0
 const MARGIN:  float = 10.0
 
 # ─── Child nodes ──────────────────────────────────────────────────────────────
@@ -44,6 +44,7 @@ const MARGIN:  float = 10.0
 @onready var _lbl_sugar:     Label = $RootPanel/Margin/VBox/SugarRow
 @onready var _lbl_acidity:   Label = $RootPanel/Margin/VBox/AcidityRow
 @onready var _lbl_harvest:   Label = $RootPanel/Margin/VBox/HarvestRow
+@onready var _lbl_harvested: Label = $RootPanel/Margin/VBox/HarvestedRow
 @onready var _lbl_hint:      Label = $RootPanel/Margin/VBox/HintRow
 
 # ─── State ────────────────────────────────────────────────────────────────────
@@ -133,6 +134,7 @@ func _refresh() -> void:
 			_lbl_harvest.text = "Harvest     ★ READY"
 		else:
 			_lbl_harvest.text = "Harvest     not ready"
+		_lbl_harvested.text = "Harvested   %s" % ("yes — done this year" if d.harvested_this_year else "no")
 	else:
 		_lbl_planted.text   = "Planted     empty"
 		_lbl_grape.text     = "Grape       —"
@@ -146,6 +148,7 @@ func _refresh() -> void:
 		_lbl_sugar.text     = "Sugar       —"
 		_lbl_acidity.text   = "Acidity     —"
 		_lbl_harvest.text   = "Harvest     —"
+		_lbl_harvested.text = "Harvested   —"
 
 	_lbl_hint.text = "F2  show / hide"
 

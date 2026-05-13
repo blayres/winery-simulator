@@ -222,11 +222,13 @@ func _log_tick_summary(s: Dictionary) -> void:
 	print("Vineyard Tick: avg_humidity=%.2f [%.2f–%.2f]  avg_health=%.2f [%.2f–%.2f]  avg_disease=%.2f  avg_quality=%.2f  (%d changed)" \
 			% [avg_h, min_h, max_h, avg_v, min_v, max_v, avg_d, avg_q, int(s.get("changed", 0))])
 
-	# Ripeness summary — only print during ripening seasons.
-	if planted > 0 and float(s.get("sum_ripeness", 0.0)) > 0.0:
-		var avg_r: float = float(s["sum_ripeness"]) / float(planted)
-		var avg_s: float = float(s["sum_sugar"])    / float(planted)
-		var avg_a: float = float(s["sum_acidity"])  / float(planted)
+	# Ripeness summary — print during ripening seasons (summer=1, autumn=2)
+	# even when ripeness is 0, so the player can see it's being tracked.
+	var current_season: int = TimeManager.current_season
+	if planted > 0 and (current_season == 1 or current_season == 2):
+		var avg_r: float = float(s.get("sum_ripeness", 0.0)) / float(planted)
+		var avg_s: float = float(s.get("sum_sugar",    0.0)) / float(planted)
+		var avg_a: float = float(s.get("sum_acidity",  0.0)) / float(planted)
 		var ready: int   = int(s.get("ready_count", 0))
 		print("Ripeness Tick: avg_ripeness=%.2f avg_sugar=%.2f avg_acidity=%.2f ready_tiles=%d" \
 				% [avg_r, avg_s, avg_a, ready])
@@ -252,6 +254,7 @@ func _on_year_changed(_year: int) -> void:
 			continue
 		# Age by one year (4 seasons) at year transition.
 		tile.vine_age = mini(tile.vine_age + 4, int(_get_vine_cfg("max_age", 50)) * 4)
+		tile.harvested_this_year = false   # reset harvest flag for new year
 		VineLifecycle.tick_year(tile, lc_cfg, climate_score)
 		recompute_quality_public(tile)
 		tile_data_changed.emit(tile)
