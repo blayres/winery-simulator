@@ -49,6 +49,12 @@ func _ready() -> void:
 
 	VineyardSimulation.tile_data_changed.connect(_on_tile_data_changed)
 
+	# Wire save/load feedback signals.
+	SaveManager.save_completed.connect(_on_save_completed)
+	SaveManager.load_completed.connect(_on_load_completed)
+	SaveManager.save_failed.connect(_on_save_failed)
+	SaveManager.load_failed.connect(_on_load_failed)
+
 	# Trigger grid build now that we are connected.
 	# GridSystem deferred its build waiting for this call.
 	_grid.build_when_ready()
@@ -131,6 +137,26 @@ func _on_tile_data_changed(data: TileSimData) -> void:
 		tile.notify_sim_updated()
 
 
+# ─── Save / Load signal handlers ─────────────────────────────────────────────
+
+func _on_save_completed(slot: int) -> void:
+	print("SAVE OK — slot %d  (%s)" % [slot, SaveManager._slot_path(slot)])
+
+
+func _on_load_completed(slot: int) -> void:
+	print("LOAD OK — slot %d" % slot)
+	# Re-link tile nodes to restored sim data so visuals refresh.
+	_link_sim_data_to_tiles()
+
+
+func _on_save_failed(slot: int, error: String) -> void:
+	push_error("SAVE FAILED — slot %d: %s" % [slot, error])
+
+
+func _on_load_failed(slot: int, error: String) -> void:
+	push_warning("LOAD FAILED — slot %d: %s" % [slot, error])
+
+
 # ─── Dev time controls ────────────────────────────────────────────────────────
 ## Temporary developer shortcuts — remove or gate behind a debug flag later.
 ##   Space            → advance one week
@@ -165,6 +191,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var k: InputEventKey = event
 	if not k.pressed:
+		return
+
+	# ── Save / Load ──────────────────────────────────────────────────────────
+	if k.keycode == KEY_F5:
+		SaveManager.save_game(0)
+		get_viewport().set_input_as_handled()
+		return
+	if k.keycode == KEY_F9:
+		SaveManager.load_game(0)
+		get_viewport().set_input_as_handled()
 		return
 
 	# ── Time controls ─────────────────────────────────────────────────────

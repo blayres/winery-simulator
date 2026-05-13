@@ -29,16 +29,23 @@ signal load_failed(slot: int, error: String)
 const SAVE_DIR:     String = "user://saves/"
 const SAVE_VERSION: int    = 1
 
-# Ordered list of manager autoload names.
-# The save key is derived as: manager_name.to_lower().replace("manager", "")
-# e.g. "GameManager" → "game", "EconomyManager" → "economy"
+# Ordered list of [manager_autoload_name, save_key] pairs.
+# Using explicit key mapping avoids ambiguity with the to_lower().replace() derivation
+# (e.g. "WineMarket" has no "manager" suffix, "VineyardSimulation" is not a "Manager").
 const MANAGER_KEYS: Array[String] = [
-	"GameManager",
-	"ClimateManager",
-	"EconomyManager",
-	"WineManager",
-	"EventManager",
+	"TimeManager",
+	"WineMarket",
+	"HarvestManager",
+	"FermentationManager",
+	"VineyardSimulation",
 ]
+
+# Explicit save-key overrides for managers whose name doesn't follow the
+# "strip 'manager' suffix" convention.
+const KEY_OVERRIDES: Dictionary = {
+	"WineMarket":         "winemarket",
+	"VineyardSimulation": "vineyardsimulation",
+}
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 func _ready() -> void:
@@ -54,7 +61,7 @@ func save_game(slot: int = 0) -> void:
 	}
 
 	for manager_name: String in MANAGER_KEYS:
-		var data_key: String = manager_name.to_lower().replace("manager", "")
+		var data_key: String = _key_for(manager_name)
 		save_data[data_key] = _collect_save_data(manager_name)
 
 	var path: String       = _slot_path(slot)
@@ -134,7 +141,7 @@ func _collect_save_data(manager_name: String) -> Dictionary:
 
 func _distribute_save_data(data: Dictionary) -> void:
 	for manager_name: String in MANAGER_KEYS:
-		var data_key: String      = manager_name.to_lower().replace("manager", "")
+		var data_key: String      = _key_for(manager_name)
 		var raw: Variant          = data.get(data_key, {})
 		var manager_data: Dictionary = raw if raw is Dictionary else {}
 		_restore_manager(manager_name, manager_data)
@@ -151,3 +158,11 @@ func _migrate(data: Dictionary, from_version: int) -> Dictionary:
 	push_warning("SaveManager: migrating save from v%d to v%d." % [from_version, SAVE_VERSION])
 	# Add version-specific migration logic here as the game evolves.
 	return data
+
+
+## Returns the save-file key for a manager name.
+## Uses KEY_OVERRIDES for non-standard names, otherwise strips "manager" suffix.
+func _key_for(manager_name: String) -> String:
+	if KEY_OVERRIDES.has(manager_name):
+		return str(KEY_OVERRIDES[manager_name])
+	return manager_name.to_lower().replace("manager", "")

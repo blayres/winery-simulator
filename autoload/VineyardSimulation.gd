@@ -123,6 +123,84 @@ func uproot_vine(col: int, row: int) -> void:
 	recompute_quality_public(data)
 	tile_data_changed.emit(data)
 
+# ─── Save / Load interface ────────────────────────────────────────────────────
+
+## Serialize all tile sim data for saving.
+func get_save_data() -> Dictionary:
+	var tiles_arr: Array = []
+	for key: String in _tile_data:
+		var raw: Variant = _tile_data[key]
+		if not raw is TileSimData:
+			continue
+		var d: TileSimData = raw
+		tiles_arr.append({
+			"grid_col":          d.grid_col,
+			"grid_row":          d.grid_row,
+			"soil_type":         d.soil_type,
+			"humidity":          d.humidity,
+			"fertility":         d.fertility,
+			"drainage":          d.drainage,
+			"disease_risk":      d.disease_risk,
+			"quality_potential": d.quality_potential,
+			"is_planted":        d.is_planted,
+			"grape_variety":     d.grape_variety,
+			"vine_age":          d.vine_age,
+			"vine_health":       d.vine_health,
+			"lifecycle_stage":   d.lifecycle_stage,
+			"productivity":      d.productivity,
+			"effective_quality": d.effective_quality,
+			"ripeness":          d.ripeness,
+			"sugar_level":       d.sugar_level,
+			"acidity_level":     d.acidity_level,
+			"harvest_ready":     d.harvest_ready,
+			"harvested_this_year": d.harvested_this_year,
+		})
+	return { "tiles": tiles_arr }
+
+
+## Restore tile sim data from a save. Re-links tiles to VineyardTile nodes.
+func load_save_data(data: Dictionary) -> void:
+	var raw: Variant = data.get("tiles", [])
+	if not raw is Array:
+		push_warning("VineyardSimulation.load_save_data: 'tiles' is not an Array.")
+		return
+	var arr: Array = raw
+	var restored: int = 0
+	for i: int in arr.size():
+		if not arr[i] is Dictionary:
+			continue
+		var d: Dictionary = arr[i]
+		var col: int = int(d.get("grid_col", -1))
+		var row: int = int(d.get("grid_row", -1))
+		if col < 0 or row < 0:
+			continue
+		var tile: TileSimData = get_tile_data(col, row)
+		if tile == null:
+			# Tile doesn't exist yet — grid may not be initialized.
+			push_warning("VineyardSimulation.load_save_data: tile (%d,%d) not found." % [col, row])
+			continue
+		tile.soil_type         = str(d.get("soil_type",         tile.soil_type))
+		tile.humidity          = float(d.get("humidity",          tile.humidity))
+		tile.fertility         = float(d.get("fertility",         tile.fertility))
+		tile.drainage          = float(d.get("drainage",          tile.drainage))
+		tile.disease_risk      = float(d.get("disease_risk",      tile.disease_risk))
+		tile.quality_potential = float(d.get("quality_potential", tile.quality_potential))
+		tile.is_planted        = bool(d.get("is_planted",         false))
+		tile.grape_variety     = str(d.get("grape_variety",       ""))
+		tile.vine_age          = int(d.get("vine_age",            0))
+		tile.vine_health       = float(d.get("vine_health",       0.0))
+		tile.lifecycle_stage   = str(d.get("lifecycle_stage",     "empty"))
+		tile.productivity      = float(d.get("productivity",      0.0))
+		tile.effective_quality = float(d.get("effective_quality", 0.0))
+		tile.ripeness          = float(d.get("ripeness",          0.0))
+		tile.sugar_level       = float(d.get("sugar_level",       0.0))
+		tile.acidity_level     = float(d.get("acidity_level",     0.0))
+		tile.harvest_ready     = bool(d.get("harvest_ready",      false))
+		tile.harvested_this_year = bool(d.get("harvested_this_year", false))
+		tile_data_changed.emit(tile)
+		restored += 1
+	print("VineyardSimulation: restored %d tiles from save." % restored)
+
 ## Run one simulation tick (called each season by GameManager).
 func tick_season() -> void:
 	for key: String in _tile_data:
