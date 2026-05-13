@@ -47,6 +47,7 @@ const HEALTH_POOR_TINT:    Color = Color("8a7a3a")   # yellowed, stressed
 const OUTLINE_EMPTY:       Color = Color("2a4a35")
 const OUTLINE_PLANTED:     Color = Color("1a3a28")
 const OUTLINE_SICK:        Color = Color("7a6020")
+const OUTLINE_HARVEST:     Color = Color("c8a020")   # golden — harvest ready
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -85,6 +86,12 @@ static func compute_base_color(data: TileSimData, checkerboard: bool) -> Color:
 		var sick_factor: float = clampf(1.0 - data.vine_health / 0.55, 0.0, 0.6)
 		result = result.lerp(HEALTH_POOR_TINT, sick_factor)
 
+	# Ripening tint: warm golden hue as grapes approach harvest.
+	if data.ripeness > 0.0:
+		var ripe_tint: Color  = Color("c8a840")   # warm amber
+		var ripe_blend: float = clampf(data.ripeness * 0.35, 0.0, 0.35)
+		result = result.lerp(ripe_tint, ripe_blend)
+
 	return result
 
 
@@ -92,6 +99,8 @@ static func compute_base_color(data: TileSimData, checkerboard: bool) -> Color:
 static func compute_outline_color(data: TileSimData) -> Color:
 	if data == null:
 		return OUTLINE_EMPTY
+	if data.is_planted and data.harvest_ready:
+		return OUTLINE_HARVEST
 	if data.is_planted and data.vine_health < 0.35:
 		return OUTLINE_SICK
 	if data.is_planted:

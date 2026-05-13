@@ -140,23 +140,30 @@ func tick_season() -> void:
 func _on_climate_updated(climate_state: Dictionary) -> void:
 	if _tile_data.is_empty():
 		return
-	var effects_cfg: Dictionary = _get_cfg_section("climate_effects")
-	var stats: Dictionary = _run_climate_tick(climate_state, effects_cfg)
+	var effects_cfg:  Dictionary = _get_cfg_section("climate_effects")
+	var ripeness_cfg: Dictionary = _get_cfg_section("ripeness")
+	var season:       int        = TimeManager.current_season
+	var stats: Dictionary = _run_climate_tick(climate_state, effects_cfg, ripeness_cfg, season)
 	_log_tick_summary(stats)
 
 
-func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary) -> Dictionary:
-	var changed:       int   = 0
-	var sum_humidity:  float = 0.0
-	var sum_health:    float = 0.0
-	var sum_disease:   float = 0.0
-	var sum_quality:   float = 0.0
-	var min_humidity:  float = 1.0
-	var max_humidity:  float = 0.0
-	var min_health:    float = 1.0
-	var max_health:    float = 0.0
-	var planted:       int   = 0
-	var total:         int   = 0
+func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary,
+		ripeness_cfg: Dictionary, season: int) -> Dictionary:
+	var changed:        int   = 0
+	var sum_humidity:   float = 0.0
+	var sum_health:     float = 0.0
+	var sum_disease:    float = 0.0
+	var sum_quality:    float = 0.0
+	var sum_ripeness:   float = 0.0
+	var sum_sugar:      float = 0.0
+	var sum_acidity:    float = 0.0
+	var ready_count:    int   = 0
+	var min_humidity:   float = 1.0
+	var max_humidity:   float = 0.0
+	var min_health:     float = 1.0
+	var max_health:     float = 0.0
+	var planted:        int   = 0
+	var total:          int   = 0
 
 	for key: String in _tile_data:
 		var raw: Variant = _tile_data[key]
@@ -166,7 +173,10 @@ func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary) -> Di
 		total += 1
 
 		var soil: Dictionary = _get_archetype(tile.soil_type)
-		if ClimateTileProcessor.apply(tile, climate_state, soil, effects_cfg):
+		var climate_changed: bool = ClimateTileProcessor.apply(tile, climate_state, soil, effects_cfg)
+		var ripeness_changed: bool = GrapeRipenessProcessor.apply(tile, climate_state, ripeness_cfg, season)
+
+		if climate_changed or ripeness_changed:
 			changed += 1
 			tile_data_changed.emit(tile)
 
@@ -175,17 +185,24 @@ func _run_climate_tick(climate_state: Dictionary, effects_cfg: Dictionary) -> Di
 		max_humidity   = maxf(max_humidity, tile.humidity)
 		sum_disease   += tile.disease_risk
 		if tile.is_planted:
-			planted    += 1
-			sum_health += tile.vine_health
-			min_health  = minf(min_health, tile.vine_health)
-			max_health  = maxf(max_health, tile.vine_health)
-			sum_quality += tile.quality_potential
+			planted     += 1
+			sum_health  += tile.vine_health
+			min_health   = minf(min_health, tile.vine_health)
+			max_health   = maxf(max_health, tile.vine_health)
+			sum_quality  += tile.quality_potential
+			sum_ripeness += tile.ripeness
+			sum_sugar    += tile.sugar_level
+			sum_acidity  += tile.acidity_level
+			if tile.harvest_ready:
+				ready_count += 1
 
 	return {
 		"total": total, "changed": changed, "planted": planted,
 		"sum_humidity": sum_humidity, "min_humidity": min_humidity, "max_humidity": max_humidity,
 		"sum_health":   sum_health,   "min_health":   min_health,   "max_health":   max_health,
 		"sum_disease":  sum_disease,  "sum_quality":  sum_quality,
+		"sum_ripeness": sum_ripeness, "sum_sugar":    sum_sugar,
+		"sum_acidity":  sum_acidity,  "ready_count":  ready_count,
 	}
 
 
@@ -204,6 +221,15 @@ func _log_tick_summary(s: Dictionary) -> void:
 	var avg_q: float = float(s["sum_quality"])  / float(planted) if planted > 0 else 0.0
 	print("Vineyard Tick: avg_humidity=%.2f [%.2f–%.2f]  avg_health=%.2f [%.2f–%.2f]  avg_disease=%.2f  avg_quality=%.2f  (%d changed)" \
 			% [avg_h, min_h, max_h, avg_v, min_v, max_v, avg_d, avg_q, int(s.get("changed", 0))])
+
+	# Ripeness summary — only print during ripening seasons.
+	if planted > 0 and float(s.get("sum_ripeness", 0.0)) > 0.0:
+		var avg_r: float = float(s["sum_ripeness"]) / float(planted)
+		var avg_s: float = float(s["sum_sugar"])    / float(planted)
+		var avg_a: float = float(s["sum_acidity"])  / float(planted)
+		var ready: int   = int(s.get("ready_count", 0))
+		print("Ripeness Tick: avg_ripeness=%.2f avg_sugar=%.2f avg_acidity=%.2f ready_tiles=%d" \
+				% [avg_r, avg_s, avg_a, ready])
 
 
 # ─── Private — year tick ──────────────────────────────────────────────────────

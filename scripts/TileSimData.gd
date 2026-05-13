@@ -73,18 +73,35 @@ extends Resource
 ## Combines age stage, health, disease, and climate score.
 @export var productivity: float = 0.0
 
+# ─── Ripeness ─────────────────────────────────────────────────────────────────
+## 0.0–1.0  current grape ripeness. Progresses in summer/autumn, resets in spring.
+@export var ripeness: float = 0.0
+
+## 0.0–1.0  sugar content. Rises with ripeness and warm temperatures.
+@export var sugar_level: float = 0.20
+
+## 0.0–1.0  acidity level. Decreases as ripeness rises (inverse relationship).
+@export var acidity_level: float = 0.85
+
+## True when ripeness ≥ harvest_ready_threshold and vine is mature/old.
+@export var harvest_ready: bool = false
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 ## Returns a human-readable summary string for debug display.
 func summary() -> String:
 	var planted_str: String = grape_variety if is_planted else "empty"
+	var ripe_str: String = "  ripe=%.2f sug=%.2f acid=%.2f%s" % [
+		ripeness, sugar_level, acidity_level,
+		"  READY" if harvest_ready else ""
+	] if is_planted else ""
 	return (
 		"[%d,%d] soil=%s  humidity=%.2f  fertility=%.2f\n" +
-		"       planted=%s  stage=%s  age=%dy  health=%.2f  quality=%.2f  disease=%.2f  prod=%.2f"
+		"       planted=%s  stage=%s  age=%dy  health=%.2f  quality=%.2f  disease=%.2f  prod=%.2f%s"
 	) % [
 		grid_col, grid_row, soil_type, humidity, fertility,
 		planted_str, lifecycle_stage, vine_age / 4,
-		vine_health, effective_quality, disease_risk, productivity
+		vine_health, effective_quality, disease_risk, productivity, ripe_str
 	]
 
 

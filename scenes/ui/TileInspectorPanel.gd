@@ -20,7 +20,7 @@ extends CanvasLayer
 
 # ─── Panel geometry ───────────────────────────────────────────────────────────
 const PANEL_W: float = 300.0
-const PANEL_H: float = 540.0
+const PANEL_H: float = 640.0
 const MARGIN:  float = 10.0
 
 # ─── Child nodes ──────────────────────────────────────────────────────────────
@@ -40,6 +40,10 @@ const MARGIN:  float = 10.0
 @onready var _lbl_disease:   Label = $RootPanel/Margin/VBox/DiseaseRow
 @onready var _lbl_quality:   Label = $RootPanel/Margin/VBox/QualityRow
 @onready var _lbl_prod:      Label = $RootPanel/Margin/VBox/ProductivityRow
+@onready var _lbl_ripeness:  Label = $RootPanel/Margin/VBox/RipenessRow
+@onready var _lbl_sugar:     Label = $RootPanel/Margin/VBox/SugarRow
+@onready var _lbl_acidity:   Label = $RootPanel/Margin/VBox/AcidityRow
+@onready var _lbl_harvest:   Label = $RootPanel/Margin/VBox/HarvestRow
 @onready var _lbl_hint:      Label = $RootPanel/Margin/VBox/HintRow
 
 # ─── State ────────────────────────────────────────────────────────────────────
@@ -122,6 +126,13 @@ func _refresh() -> void:
 		_lbl_disease.text   = "Disease     %s" % _risk_label(d.disease_risk)
 		_lbl_quality.text   = "Quality     %s" % _bar(d.effective_quality)
 		_lbl_prod.text      = "Productivity %s" % _bar(d.productivity)
+		_lbl_ripeness.text  = "Ripeness    %s" % _bar(d.ripeness)
+		_lbl_sugar.text     = "Sugar       %s" % _bar(d.sugar_level)
+		_lbl_acidity.text   = "Acidity     %s" % _bar(d.acidity_level)
+		if d.harvest_ready:
+			_lbl_harvest.text = "Harvest     ★ READY"
+		else:
+			_lbl_harvest.text = "Harvest     not ready"
 	else:
 		_lbl_planted.text   = "Planted     empty"
 		_lbl_grape.text     = "Grape       —"
@@ -131,6 +142,10 @@ func _refresh() -> void:
 		_lbl_disease.text   = "Disease     —"
 		_lbl_quality.text   = "Quality     —"
 		_lbl_prod.text      = "Productivity —"
+		_lbl_ripeness.text  = "Ripeness    —"
+		_lbl_sugar.text     = "Sugar       —"
+		_lbl_acidity.text   = "Acidity     —"
+		_lbl_harvest.text   = "Harvest     —"
 
 	_lbl_hint.text = "F2  show / hide"
 
