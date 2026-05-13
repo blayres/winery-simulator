@@ -30,6 +30,7 @@ extends Node2D
 @onready var _camera:    CameraController   = $WorldCamera
 @onready var _debug:     DebugOverlay       = $WorldUI/DebugOverlay
 @onready var _inspector: TileInspectorPanel = $TileInspectorPanel
+@onready var _actions:   VineyardActionsPanel = $VineyardActionsPanel
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 func _ready() -> void:
@@ -91,8 +92,9 @@ func _on_grid_ready() -> void:
 	# ── 3. Link sim data to tile nodes ────────────────────────────────────
 	_link_sim_data_to_tiles()
 
-	# ── 4. Wire debug overlay ─────────────────────────────────────────────
+	# ── 4. Wire debug overlay and actions panel ──────────────────────────
 	_debug.init(_grid, _camera)
+	_actions.init(_grid)
 
 	print("World: fully initialized. Grid=%s" % str(grid_size))
 
@@ -221,6 +223,9 @@ func _validate_children() -> bool:
 		ok = false
 	if _inspector == null:
 		push_error("World: $TileInspectorPanel is null — TileInspectorPanel.tscn may have failed to load.")
+		ok = false
+	if _actions == null:
+		push_error("World: $VineyardActionsPanel is null — VineyardActionsPanel.tscn may have failed to load.")
 		ok = false
 	return ok
 
