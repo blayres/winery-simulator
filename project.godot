@@ -27,6 +27,7 @@ WineManager="*res://autoload/WineManager.gd"
 EventManager="*res://autoload/EventManager.gd"
 SaveManager="*res://autoload/SaveManager.gd"
 VineyardSimulation="*res://autoload/VineyardSimulation.gd"
+VineyardActionSystem="*res://autoload/VineyardActionSystem.gd"
 
 [physics]
 

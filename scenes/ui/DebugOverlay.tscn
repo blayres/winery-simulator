@@ -100,4 +100,4 @@ text = "Grid    -"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.50, 0.60, 0.50, 0.75)
 theme_override_font_sizes/font_size = 10
-text = "F1 overlay · F2 inspector · Space week · Shift+Space season · T auto"
+text = "F1 overlay · F2 inspector · Space week · Shift+Space season · Y auto · I/D/T/P/R actions"

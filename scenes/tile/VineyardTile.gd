@@ -140,6 +140,18 @@ func notify_sim_updated() -> void:
 	_label.text = TileVisualController.tile_label(sim_data)
 
 
+## Brief color flash to confirm a player action was applied.
+## [param flash_color] — action-specific highlight color.
+func flash_action(flash_color: Color) -> void:
+	if _tween != null and _tween.is_running():
+		_tween.kill()
+	_tween = create_tween()
+	_tween.set_ease(Tween.EASE_OUT)
+	_tween.set_trans(Tween.TRANS_SINE)
+	_tween.tween_property(_polygon, "color", flash_color, 0.08)
+	_tween.tween_property(_polygon, "color", _color_base, 0.35)
+
+
 func deselect() -> void:
 	if _state == TileState.SELECTED:
 		_set_state(TileState.DEFAULT)

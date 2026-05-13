@@ -21,8 +21,16 @@
     "base":              0.05,
     "humidity_factor":   0.20
   },
-  "lifecycle": {
-    "young_max_years":        3,
+  "player_actions": {
+    "irrigate_humidity_gain":    0.18,
+    "drain_humidity_loss":       0.20,
+    "treat_disease_reduction":   0.25,
+    "prune_health_gain":         0.08,
+    "prune_productivity_gain":   0.06,
+    "replant_starting_health":   0.85,
+    "replant_default_grape":     "pinot_noir"
+  },
+  "lifecycle": {    "young_max_years":        3,
     "mature_max_years":      25,
     "old_max_years":         50,
     "young_quality_cap":     0.65,

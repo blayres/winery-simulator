@@ -105,4 +105,4 @@ func _update_labels() -> void:
 	else:
 		_lbl_zoom.text = "Zoom    -"
 
-	_lbl_hint.text = "F1 overlay · F2 inspector · Space week · Shift+Space season · T auto"
+	_lbl_hint.text = "F1 overlay · F2 inspector · Space week · Shift+Space season · Y auto · I/D/T/P/R actions"

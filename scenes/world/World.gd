@@ -132,7 +132,21 @@ func _on_tile_data_changed(data: TileSimData) -> void:
 ## Temporary developer shortcuts — remove or gate behind a debug flag later.
 ##   Space            → advance one week
 ##   Shift + Space    → advance one full season (4 weeks)
-##   T                → toggle auto-advance
+##   Y                → toggle auto-advance  (was T — freed for Treat Disease)
+##
+## Vineyard action hotkeys (selected tile only):
+##   I  → Irrigate      (raise humidity)
+##   D  → Drain         (lower humidity)
+##   T  → Treat Disease (reduce disease risk — planted only)
+##   P  → Prune         (improve health/productivity — planted only)
+##   R  → Replant       (plant or replace vine)
+
+# Flash colors per action — defined here so they're easy to tune.
+const FLASH_IRRIGATE: Color = Color(0.40, 0.70, 1.00, 1.0)   # blue
+const FLASH_DRAIN:    Color = Color(0.85, 0.75, 0.40, 1.0)   # sandy
+const FLASH_TREAT:    Color = Color(0.40, 1.00, 0.55, 1.0)   # green
+const FLASH_PRUNE:    Color = Color(0.90, 0.90, 0.40, 1.0)   # yellow
+const FLASH_REPLANT:  Color = Color(0.55, 1.00, 0.55, 1.0)   # bright green
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey:
@@ -141,15 +155,53 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not k.pressed:
 		return
 
+	# ── Time controls ─────────────────────────────────────────────────────
 	if k.keycode == KEY_SPACE and k.shift_pressed:
 		TimeManager.advance_season_full()
 		get_viewport().set_input_as_handled()
-	elif k.keycode == KEY_SPACE:
+		return
+	if k.keycode == KEY_SPACE:
 		TimeManager.advance_week()
 		get_viewport().set_input_as_handled()
-	elif k.keycode == KEY_T:
+		return
+	if k.keycode == KEY_Y:
 		TimeManager.toggle_auto_advance()
 		get_viewport().set_input_as_handled()
+		return
+
+	# ── Vineyard actions — require a selected tile ─────────────────────────
+	var sel: VineyardTile = _grid.get_selected_tile()
+	if sel == null:
+		return
+
+	var col: int = sel.grid_col
+	var row: int = sel.grid_row
+
+	match k.keycode:
+		KEY_I:
+			var result: String = VineyardActionSystem.irrigate(col, row)
+			_flash_tile(sel, FLASH_IRRIGATE)
+			get_viewport().set_input_as_handled()
+		KEY_D:
+			var result: String = VineyardActionSystem.drain(col, row)
+			_flash_tile(sel, FLASH_DRAIN)
+			get_viewport().set_input_as_handled()
+		KEY_T:
+			var result: String = VineyardActionSystem.treat_disease(col, row)
+			_flash_tile(sel, FLASH_TREAT)
+			get_viewport().set_input_as_handled()
+		KEY_P:
+			var result: String = VineyardActionSystem.prune(col, row)
+			_flash_tile(sel, FLASH_PRUNE)
+			get_viewport().set_input_as_handled()
+		KEY_R:
+			var result: String = VineyardActionSystem.replant(col, row)
+			_flash_tile(sel, FLASH_REPLANT)
+			get_viewport().set_input_as_handled()
+
+
+func _flash_tile(tile: VineyardTile, color: Color) -> void:
+	tile.flash_action(color)
 
 
 # ─── Private ──────────────────────────────────────────────────────────────────
