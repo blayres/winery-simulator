@@ -19,16 +19,16 @@
   "tile_colors": {
     "default_a":  "4a7c59",
     "default_b":  "527f61",
-    "hover":      "6aab7a",
-    "selected":   "f0c060",
+    "hover":      "7acc8a",
+    "selected":   "f4d055",
     "outline":    "2a4a35",
     "shadow":     "1a2a1f"
   },
   "tile_animation": {
-    "hover_scale": 1.05,
-    "hover_duration": 0.15,
-    "select_scale": 1.08,
-    "select_duration": 0.2
+    "hover_scale": 1.06,
+    "hover_duration": 0.12,
+    "select_scale": 1.10,
+    "select_duration": 0.18
   },
   "atmosphere": {
     "background_color": "3d5a4a"

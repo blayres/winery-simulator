@@ -55,6 +55,9 @@ func _ready() -> void:
 	SaveManager.save_failed.connect(_on_save_failed)
 	SaveManager.load_failed.connect(_on_load_failed)
 
+	# Seasonal atmosphere — update tile tints when season changes.
+	ClimateManager.climate_updated.connect(_on_climate_updated_atmosphere)
+
 	# Trigger grid build now that we are connected.
 	# GridSystem deferred its build waiting for this call.
 	_grid.build_when_ready()
@@ -103,6 +106,10 @@ func _on_grid_ready() -> void:
 	_debug.init(_grid, _camera)
 	_actions.init(_grid)
 
+	# Apply initial seasonal tint now that tiles exist.
+	_broadcast_season(TimeManager.current_season)
+	_last_broadcast_season = TimeManager.current_season
+
 	print("World: fully initialized. Grid=%s" % str(grid_size))
 
 
@@ -135,6 +142,30 @@ func _on_tile_data_changed(data: TileSimData) -> void:
 	var tile: VineyardTile = _grid.get_tile(data.grid_col, data.grid_row)
 	if tile != null:
 		tile.notify_sim_updated()
+
+
+# ─── Seasonal atmosphere ──────────────────────────────────────────────────────
+
+## Called every week when climate updates. Only acts on season transitions
+## to avoid re-tinting all 192 tiles every single week.
+var _last_broadcast_season: int = -1
+
+func _on_climate_updated_atmosphere(_state: Dictionary) -> void:
+	var season: int = TimeManager.current_season
+	if season == _last_broadcast_season:
+		return
+	_last_broadcast_season = season
+	_broadcast_season(season)
+
+
+## Push the current season to every tile so they can update their tint.
+func _broadcast_season(season: int) -> void:
+	if _grid == null:
+		return
+	var all_tiles: Array = _grid.get_all_tiles()
+	for i: int in all_tiles.size():
+		if all_tiles[i] is VineyardTile:
+			(all_tiles[i] as VineyardTile).set_season(season)
 
 
 # ─── Save / Load signal handlers ─────────────────────────────────────────────

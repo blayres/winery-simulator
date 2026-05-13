@@ -64,8 +64,14 @@ func init(grid: GridSystem, camera: CameraController) -> void:
 func _update_labels() -> void:
 	# ── Time ──────────────────────────────────────────────────────────────
 	_lbl_time.text = "Time    %s" % TimeManager.get_time_string()
-	_lbl_auto.text = "Auto    %s" % ("ON  (T to stop)" if TimeManager.auto_advance \
-			else "OFF  (T to start)")
+	# Tint the time label by current season for quick visual feedback.
+	match TimeManager.current_season:
+		0: _lbl_time.add_theme_color_override("font_color", Color("88dd88"))  # Spring — green
+		1: _lbl_time.add_theme_color_override("font_color", Color("f0d060"))  # Summer — gold
+		2: _lbl_time.add_theme_color_override("font_color", Color("e08840"))  # Autumn — orange
+		3: _lbl_time.add_theme_color_override("font_color", Color("90b8d8"))  # Winter — blue
+	_lbl_auto.text = "Auto    %s" % ("ON  (Y to stop)" if TimeManager.auto_advance \
+			else "OFF  (Y to start)")
 
 	# ── Climate ───────────────────────────────────────────────────────────
 	_lbl_climate.text = "Weather %s  (score %.0f%%)" % [

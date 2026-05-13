@@ -16,10 +16,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_bottom = 12
 
 [node name="VBox" type="VBoxContainer" parent="RootPanel/Margin"]
 layout_mode = 2
@@ -27,8 +27,8 @@ theme_override_constants/separation = 5
 
 [node name="Header" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.85, 0.55, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.95, 0.88, 0.55, 1)
+theme_override_font_sizes/font_size = 14
 text = "Tile Inspector"
 
 [node name="HSep0" type="HSeparator" parent="RootPanel/Margin/VBox"]
@@ -36,37 +36,37 @@ layout_mode = 2
 
 [node name="CoordsRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.88, 0.88, 0.78, 1)
+theme_override_colors/font_color = Color(0.90, 0.90, 0.80, 1)
 theme_override_font_sizes/font_size = 12
 text = "Coords      -"
 
 [node name="SoilRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.82, 0.74, 0.56, 1)
+theme_override_colors/font_color = Color(0.86, 0.76, 0.56, 1)
 theme_override_font_sizes/font_size = 12
 text = "Soil        -"
 
 [node name="HumidityRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.60, 0.82, 0.92, 1)
+theme_override_colors/font_color = Color(0.55, 0.84, 0.96, 1)
 theme_override_font_sizes/font_size = 12
 text = "Humidity    -"
 
 [node name="FertilityRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.60, 0.90, 0.62, 1)
+theme_override_colors/font_color = Color(0.55, 0.92, 0.60, 1)
 theme_override_font_sizes/font_size = 12
 text = "Fertility   -"
 
 [node name="DrainageRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.78, 0.92, 1)
+theme_override_colors/font_color = Color(0.60, 0.78, 0.96, 1)
 theme_override_font_sizes/font_size = 12
 text = "Drainage    -"
 
 [node name="PotentialRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.82, 0.45, 1)
+theme_override_colors/font_color = Color(0.96, 0.84, 0.42, 1)
 theme_override_font_sizes/font_size = 12
 text = "Potential   -"
 
@@ -75,49 +75,49 @@ layout_mode = 2
 
 [node name="PlantedRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.85, 0.72, 1)
+theme_override_colors/font_color = Color(0.88, 0.88, 0.74, 1)
 theme_override_font_sizes/font_size = 12
 text = "Planted     -"
 
 [node name="GrapeRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.70, 0.88, 1)
+theme_override_colors/font_color = Color(0.88, 0.68, 0.92, 1)
 theme_override_font_sizes/font_size = 12
 text = "Grape       -"
 
 [node name="AgeRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.85, 0.72, 1)
+theme_override_colors/font_color = Color(0.88, 0.88, 0.74, 1)
 theme_override_font_sizes/font_size = 12
 text = "Age         -"
 
 [node name="LifecycleRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.92, 0.78, 1)
+theme_override_colors/font_color = Color(0.72, 0.94, 0.76, 1)
 theme_override_font_sizes/font_size = 12
 text = "Stage       -"
 
 [node name="HealthRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.50, 0.90, 0.55, 1)
+theme_override_colors/font_color = Color(0.44, 0.92, 0.52, 1)
 theme_override_font_sizes/font_size = 12
 text = "Health      -"
 
 [node name="DiseaseRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.60, 0.50, 1)
+theme_override_colors/font_color = Color(0.96, 0.56, 0.44, 1)
 theme_override_font_sizes/font_size = 12
 text = "Disease     -"
 
 [node name="QualityRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.82, 0.45, 1)
+theme_override_colors/font_color = Color(0.96, 0.84, 0.42, 1)
 theme_override_font_sizes/font_size = 12
 text = "Quality     -"
 
 [node name="ProductivityRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.78, 0.88, 0.65, 1)
+theme_override_colors/font_color = Color(0.76, 0.90, 0.62, 1)
 theme_override_font_sizes/font_size = 12
 text = "Productivity -"
 
@@ -126,31 +126,31 @@ layout_mode = 2
 
 [node name="RipenessRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.82, 0.40, 1)
+theme_override_colors/font_color = Color(0.98, 0.84, 0.36, 1)
 theme_override_font_sizes/font_size = 12
 text = "Ripeness    -"
 
 [node name="SugarRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.98, 0.90, 0.55, 1)
+theme_override_colors/font_color = Color(1.0, 0.92, 0.52, 1)
 theme_override_font_sizes/font_size = 12
 text = "Sugar       -"
 
 [node name="AcidityRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.90, 0.98, 1)
+theme_override_colors/font_color = Color(0.60, 0.92, 1.0, 1)
 theme_override_font_sizes/font_size = 12
 text = "Acidity     -"
 
 [node name="HarvestRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.88, 0.30, 1)
+theme_override_colors/font_color = Color(0.98, 0.90, 0.28, 1)
 theme_override_font_sizes/font_size = 12
 text = "Harvest     -"
 
 [node name="HarvestedRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.70, 0.80, 0.70, 1)
+theme_override_colors/font_color = Color(0.68, 0.80, 0.68, 1)
 theme_override_font_sizes/font_size = 12
 text = "Harvested   -"
 
@@ -159,6 +159,6 @@ layout_mode = 2
 
 [node name="HintRow" type="Label" parent="RootPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.50, 0.60, 0.50, 0.75)
+theme_override_colors/font_color = Color(0.48, 0.58, 0.48, 0.80)
 theme_override_font_sizes/font_size = 10
 text = "F2  show / hide"

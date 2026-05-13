@@ -32,26 +32,29 @@ enum TileState { DEFAULT, HOVERED, SELECTED }
 var _state: TileState = TileState.DEFAULT
 
 # ─── Identity ─────────────────────────────────────────────────────────────────
-var grid_col:     int         = 0
-var grid_row:     int         = 0
-var _checkerboard: bool       = false
+var grid_col:      int  = 0
+var grid_row:      int  = 0
+var _checkerboard: bool = false
+
+# ─── Current season (set by World, used for seasonal tinting) ─────────────────
+var _season: int = 0
 
 # ─── Simulation data reference (READ-ONLY from this script) ──────────────────
 var sim_data: TileSimData = null
 
 # ─── Interaction colors (from world_config, for hover/select states) ──────────
-var _color_hover:    Color = Color("6aab7a")
-var _color_selected: Color = Color("f0c060")
+var _color_hover:    Color = Color("7ac08a")
+var _color_selected: Color = Color("f4d055")
 
 # ─── Computed base color (from TileVisualController) ─────────────────────────
 var _color_base:    Color = Color("4a7c59")
 var _color_outline: Color = Color("2a4a35")
 
 # ─── Animation config ─────────────────────────────────────────────────────────
-var _hover_scale:  float = 1.05
-var _hover_dur:    float = 0.15
-var _select_scale: float = 1.08
-var _select_dur:   float = 0.20
+var _hover_scale:  float = 1.06
+var _hover_dur:    float = 0.12
+var _select_scale: float = 1.10
+var _select_dur:   float = 0.18
 
 # ─── Child nodes ──────────────────────────────────────────────────────────────
 var _shadow:  Polygon2D
@@ -113,14 +116,14 @@ func setup(col: int, row: int, world_pos: Vector2,
 	var shadow_color: Color = Color("1a2a1f")
 	if colors.has("shadow"):
 		shadow_color = Color(str(colors["shadow"]))
-	shadow_color.a = 0.45
+	shadow_color.a = 0.50
 	_shadow.color  = shadow_color
 
 	# Animation config.
-	_hover_scale  = float(anim.get("hover_scale",    1.05))
-	_hover_dur    = float(anim.get("hover_duration",  0.15))
-	_select_scale = float(anim.get("select_scale",    1.08))
-	_select_dur   = float(anim.get("select_duration", 0.20))
+	_hover_scale  = float(anim.get("hover_scale",    1.06))
+	_hover_dur    = float(anim.get("hover_duration",  0.12))
+	_select_scale = float(anim.get("select_scale",    1.10))
+	_select_dur   = float(anim.get("select_duration", 0.18))
 
 	_label.text = "%d,%d" % [col, row]
 
@@ -140,16 +143,30 @@ func notify_sim_updated() -> void:
 	_label.text = TileVisualController.tile_label(sim_data)
 
 
+## Update the current season so seasonal tinting stays current.
+## Called by World when the season changes.
+func set_season(season: int) -> void:
+	if _season == season:
+		return
+	_season = season
+	_refresh_base_colors()
+	if _state == TileState.DEFAULT:
+		_apply_state_instant()
+
+
 ## Brief color flash to confirm a player action was applied.
 ## [param flash_color] — action-specific highlight color.
 func flash_action(flash_color: Color) -> void:
 	if _tween != null and _tween.is_running():
 		_tween.kill()
+	var target: Color = _color_base.lerp(flash_color, 0.85)
 	_tween = create_tween()
 	_tween.set_ease(Tween.EASE_OUT)
 	_tween.set_trans(Tween.TRANS_SINE)
-	_tween.tween_property(_polygon, "color", flash_color, 0.08)
-	_tween.tween_property(_polygon, "color", _color_base, 0.35)
+	# Flash up quickly, hold briefly, then fade back.
+	_tween.tween_property(_polygon, "color", target,      0.06)
+	_tween.tween_property(_polygon, "color", target,      0.10)
+	_tween.tween_property(_polygon, "color", _color_base, 0.40)
 
 
 func deselect() -> void:
@@ -186,7 +203,7 @@ func _on_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) ->
 # ─── Private — visual state ───────────────────────────────────────────────────
 
 func _refresh_base_colors() -> void:
-	_color_base    = TileVisualController.compute_base_color(sim_data, _checkerboard)
+	_color_base    = TileVisualController.compute_base_color(sim_data, _checkerboard, _season)
 	_color_outline = TileVisualController.compute_outline_color(sim_data)
 
 
@@ -209,23 +226,29 @@ func _animate_to_state() -> void:
 	if _tween != null and _tween.is_running():
 		_tween.kill()
 
-	var target_color: Color
-	var target_scale: float
-	var duration:     float
+	var target_color:   Color
+	var target_outline: Color
+	var target_scale:   float
+	var duration:       float
 
 	match _state:
 		TileState.DEFAULT:
-			target_color = _color_base
-			target_scale = 1.0
-			duration     = _hover_dur
+			target_color   = _color_base
+			target_outline = _color_outline
+			target_scale   = 1.0
+			duration       = _hover_dur
 		TileState.HOVERED:
-			target_color = _color_hover
-			target_scale = _hover_scale
-			duration     = _hover_dur
+			# Blend hover color with a hint of the seasonal tint.
+			var season_hint: Color = TileVisualController.get_season_tint(_season)
+			target_color   = _color_hover.lerp(season_hint, 0.15)
+			target_outline = _color_outline.lightened(0.20)
+			target_scale   = _hover_scale
+			duration       = _hover_dur
 		TileState.SELECTED:
-			target_color = _color_selected
-			target_scale = _select_scale
-			duration     = _select_dur
+			target_color   = _color_selected
+			target_outline = _color_selected.lightened(0.15)
+			target_scale   = _select_scale
+			duration       = _select_dur
 
 	_tween = create_tween()
 	_tween.set_parallel(true)
@@ -233,5 +256,6 @@ func _animate_to_state() -> void:
 	_tween.set_trans(
 		Tween.TRANS_BACK if _state == TileState.SELECTED else Tween.TRANS_SINE
 	)
-	_tween.tween_property(_polygon, "color", target_color, duration)
-	_tween.tween_property(self, "scale", Vector2(target_scale, target_scale), duration)
+	_tween.tween_property(_polygon, "color",  target_color,   duration)
+	_tween.tween_property(_outline, "color",  target_outline, duration)
+	_tween.tween_property(self,     "scale",  Vector2(target_scale, target_scale), duration)

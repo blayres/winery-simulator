@@ -22,64 +22,86 @@ extends RefCounted
 
 # ─── Soil color palette ───────────────────────────────────────────────────────
 ## Maps soil_type id → base tile color.
-## These are prototype colors — replace with sprites/textures later.
+## Brightened slightly vs prototype v1 so owned empty land reads clearly.
 const SOIL_COLORS: Dictionary = {
-	"limestone_clay": Color("c8b89a"),
-	"clay":           Color("a0785a"),
-	"gravel":         Color("b8a882"),
-	"sandy":          Color("d4c090"),
+	"limestone_clay": Color("d4c4a8"),   # warm cream
+	"clay":           Color("b08868"),   # terracotta
+	"gravel":         Color("c4b890"),   # sandy stone
+	"sandy":          Color("ddd0a0"),   # pale gold
 }
-
-# Fallback color when soil id is unknown.
-const SOIL_COLOR_DEFAULT: Color = Color("8a9a7a")
+const SOIL_COLOR_DEFAULT: Color = Color("9aaa8a")   # muted sage
 
 # ─── Vine overlay colors ──────────────────────────────────────────────────────
-const VINE_COLOR_YOUNG:     Color = Color("6aae78")   # bright fresh green
-const VINE_COLOR_MATURE:    Color = Color("3d7a4a")   # deep vineyard green
-const VINE_COLOR_OLD:       Color = Color("2d5c38")   # dark, concentrated
-const VINE_COLOR_DECLINING: Color = Color("6b6830")   # olive-brown, stressed
+## Each stage has a distinct, readable hue.
+const VINE_COLOR_YOUNG:     Color = Color("72c080")   # bright fresh green
+const VINE_COLOR_MATURE:    Color = Color("3a8048")   # deep vineyard green
+const VINE_COLOR_OLD:       Color = Color("285c38")   # dark, concentrated
+const VINE_COLOR_DECLINING: Color = Color("786030")   # olive-brown, stressed
 
 # ─── Health tint ──────────────────────────────────────────────────────────────
-## Lerp target when vine health is low.
-const HEALTH_POOR_TINT:    Color = Color("8a7a3a")   # yellowed, stressed
+## Reddish-brown for sick vines — more readable than the old yellow.
+const HEALTH_POOR_TINT: Color = Color("904030")   # deep red-brown
 
 # ─── Outline colors ───────────────────────────────────────────────────────────
-const OUTLINE_EMPTY:       Color = Color("2a4a35")
-const OUTLINE_PLANTED:     Color = Color("1a3a28")
-const OUTLINE_SICK:        Color = Color("7a6020")
-const OUTLINE_HARVEST:     Color = Color("c8a020")   # golden — harvest ready
+const OUTLINE_EMPTY:    Color = Color("2a4a35")
+const OUTLINE_PLANTED:  Color = Color("1a3a28")
+const OUTLINE_SICK:     Color = Color("8a3820")   # reddish — matches health tint
+const OUTLINE_HARVEST:  Color = Color("d4a820")   # bright gold — harvest ready
 
-# ─── Locked tile color ────────────────────────────────────────────────────────
-## Locked tiles are desaturated and darkened to signal they are unavailable.
-const LOCKED_COLOR:   Color = Color("3a3a3a")
-const LOCKED_OUTLINE: Color = Color("252525")
+# ─── Locked tile colors ───────────────────────────────────────────────────────
+## Desaturated blue-grey — clearly unavailable, slightly cooler than soil.
+const LOCKED_COLOR:   Color = Color("3a3e44")
+const LOCKED_OUTLINE: Color = Color("252830")
+
+# ─── Seasonal atmosphere tints ────────────────────────────────────────────────
+## Subtle overlay blended onto the final tile color each season.
+## Applied at low strength so individual tile identity is preserved.
+const SEASON_TINT: Array = [
+	Color("a8d8a0"),   # Spring  — fresh pale green
+	Color("e8d880"),   # Summer  — warm golden
+	Color("d89050"),   # Autumn  — orange-amber
+	Color("a0b8d0"),   # Winter  — cool blue-grey
+]
+const SEASON_TINT_STRENGTH: Array = [
+	0.08,   # Spring  — gentle
+	0.10,   # Summer  — warm
+	0.12,   # Autumn  — noticeable
+	0.10,   # Winter  — cool
+]
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
 ## Computes the base polygon color for a tile given its sim data.
 ## [param checkerboard] applies a subtle brightness shift for grid readability.
-static func compute_base_color(data: TileSimData, checkerboard: bool) -> Color:
+## [param season] 0–3 applies a seasonal atmosphere tint.
+static func compute_base_color(data: TileSimData, checkerboard: bool,
+		season: int = -1) -> Color:
 	if data == null:
 		return SOIL_COLOR_DEFAULT
 
-	# Locked tiles: dark, desaturated, clearly unavailable.
+	# Locked tiles: cool blue-grey, clearly unavailable.
 	if not data.is_owned:
 		var locked: Color = LOCKED_COLOR
 		if checkerboard:
-			locked = locked.darkened(0.05)
+			locked = locked.darkened(0.06)
+		# Locked tiles still get a faint seasonal tint so they feel part of the world.
+		if season >= 0 and season < SEASON_TINT.size():
+			locked = locked.lerp(SEASON_TINT[season], SEASON_TINT_STRENGTH[season] * 0.4)
 		return locked
 
 	# Start from soil color.
 	var base: Color = SOIL_COLORS.get(data.soil_type, SOIL_COLOR_DEFAULT)
 
-	# Checkerboard: darken alternate tiles slightly.
+	# Checkerboard: darken alternate tiles slightly for grid readability.
 	if checkerboard:
-		base = base.darkened(0.06)
+		base = base.darkened(0.07)
 
 	if not data.is_planted:
-		return base.lerp(base.darkened(0.15), data.humidity * 0.4)
+		# Empty owned land: show soil with a subtle humidity darkening.
+		var result: Color = base.lerp(base.darkened(0.18), data.humidity * 0.35)
+		return _apply_season(result, season)
 
-	# Planted tile: color driven by lifecycle stage.
+	# ── Planted tile ──────────────────────────────────────────────────────
 	var vine_color: Color
 	match data.lifecycle_stage:
 		"young":     vine_color = VINE_COLOR_YOUNG
@@ -88,23 +110,24 @@ static func compute_base_color(data: TileSimData, checkerboard: bool) -> Color:
 		"declining": vine_color = VINE_COLOR_DECLINING
 		_:           vine_color = VINE_COLOR_MATURE
 
-	# Blend soil → vine. Young vines show more soil; old vines are fully covered.
+	# Blend soil → vine. Young vines show more soil; mature vines are fully covered.
 	var age_years: int    = data.vine_age / 4
-	var vine_blend: float = clampf(float(age_years) / 8.0, 0.20, 0.75)
+	var vine_blend: float = clampf(float(age_years) / 6.0, 0.25, 0.80)
 	var result: Color     = base.lerp(vine_color, vine_blend)
 
-	# Health tint: poor health yellows the tile.
-	if data.vine_health < 0.55:
-		var sick_factor: float = clampf(1.0 - data.vine_health / 0.55, 0.0, 0.6)
+	# Health tint: reddish-brown for sick vines. Kicks in below 0.50 health.
+	if data.vine_health < 0.50:
+		var sick_factor: float = clampf(1.0 - data.vine_health / 0.50, 0.0, 0.65)
 		result = result.lerp(HEALTH_POOR_TINT, sick_factor)
 
-	# Ripening tint: warm golden hue as grapes approach harvest.
+	# Ripening tint: warm amber as grapes approach harvest.
+	# Stronger than before so harvest-ready tiles are clearly golden.
 	if data.ripeness > 0.0:
-		var ripe_tint: Color  = Color("c8a840")   # warm amber
-		var ripe_blend: float = clampf(data.ripeness * 0.35, 0.0, 0.35)
+		var ripe_tint: Color  = Color("d4a830")   # warm amber-gold
+		var ripe_blend: float = clampf(data.ripeness * 0.45, 0.0, 0.45)
 		result = result.lerp(ripe_tint, ripe_blend)
 
-	return result
+	return _apply_season(result, season)
 
 
 ## Computes the outline color for a tile.
@@ -131,3 +154,19 @@ static func tile_label(data: TileSimData) -> String:
 	if not data.is_planted:
 		return data.soil_type.substr(0, 2).to_upper()
 	return data.grape_variety.substr(0, 2).to_upper() if data.grape_variety != "" else "V"
+
+
+## Returns the seasonal tint color for a given season index (0–3).
+## Used by VineyardTile to tint hover/select colors seasonally.
+static func get_season_tint(season: int) -> Color:
+	if season >= 0 and season < SEASON_TINT.size():
+		return SEASON_TINT[season]
+	return Color.WHITE
+
+
+# ─── Private ──────────────────────────────────────────────────────────────────
+
+static func _apply_season(color: Color, season: int) -> Color:
+	if season < 0 or season >= SEASON_TINT.size():
+		return color
+	return color.lerp(SEASON_TINT[season], SEASON_TINT_STRENGTH[season])

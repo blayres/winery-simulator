@@ -146,10 +146,10 @@ func _refresh() -> void:
 
 
 func _quality_color(quality: float) -> String:
-	if quality >= 0.85: return "#f0d060"
-	elif quality >= 0.70: return "#80d080"
-	elif quality >= 0.50: return "#c0c0c0"
-	else: return "#c06060"
+	if quality >= 0.60: return "#f0d060"    # Exceptional — gold
+	elif quality >= 0.45: return "#80d080"  # Good — green
+	elif quality >= 0.30: return "#c0c0c0"  # Average — silver
+	else: return "#c06060"                  # Poor — red
 
 
 func _stage_color(stage: String) -> String:
